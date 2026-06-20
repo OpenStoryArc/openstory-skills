@@ -38,11 +38,20 @@ what keeps them from colliding with anyone else's skills).
 
 | Skill | Question it answers | Data |
 |-------|---------------------|------|
-| `/openstory:cost` | "What did my agent sessions cost?" | `mcp__openstory__token_usage`, `daily_token_usage` |
-| `/openstory:recall <topic>` | "How did I solve / set up X last time?" | `mcp__openstory__search`, `session_synopsis`, `tool_journey` |
+| `/openstory:cost` | "What did my agent sessions cost?" | `token_usage`, `daily_token_usage` |
+| `/openstory:recall <topic>` | "How did I solve / set up X last time?" | `search`, `session_synopsis`, `tool_journey` |
+| `/openstory:recap` | "What did I work on this week?" | `project_pulse`, `list_sessions` |
+| `/openstory:standup` | "Write my standup for today." | `list_sessions`, `session_synopsis` |
+| `/openstory:coach` | "How am I doing / where do I get stuck?" | `session_patterns`, `session_errors`, `productivity`* |
+| `/openstory:scan` | "Anything sensitive before I share?" | `search`* (redacted summary only) |
 
-More on the way: `recap`, `standup`, `coach`, `scan`. Each is a thin SKILL.md over
-OpenStory MCP tools — no scripts to install, portable to any OpenStory user.
+Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
+to any OpenStory user.
+
+\* `coach` and `scan` run today on existing tools (heuristic). They get sharper
+when two server-side MCP tools land in OpenStory: `prompt_scorecard` (precise
+prompt-length + edit-thrash metrics) and `sensitivity_scan` (a full regex sweep).
+The skills already prefer those tools when present and fall back gracefully.
 
 ## Local development
 
