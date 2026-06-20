@@ -1,0 +1,16 @@
+{
+  "name": "openstory-skills",
+  "owner": { "name": "OpenStory", "url": "https://openstory.work" },
+  "metadata": {
+    "description": "OpenStory skill pack — ask your own coding-agent history.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "openstory",
+      "source": "./",
+      "description": "Ask your own AI coding-agent history — cost, recall, and more — from your OpenStory store.",
+      "version": "0.1.0"
+    }
+  ]
+}

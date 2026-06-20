@@ -1,0 +1,10 @@
+{
+  "name": "openstory",
+  "displayName": "OpenStory",
+  "description": "Ask your own AI coding-agent history — cost, recall, recaps, standups, coaching — straight from your OpenStory store.",
+  "version": "0.1.0",
+  "author": { "name": "OpenStory", "url": "https://openstory.work" },
+  "homepage": "https://openstory.work",
+  "license": "Apache-2.0",
+  "keywords": ["openstory", "observability", "ai-agents", "analytics", "coding-agents"]
+}
