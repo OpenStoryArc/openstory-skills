@@ -20,6 +20,14 @@ aren't loaded — they're named `mcp__openstory__*`):
 If the user names a window ("this week", "last 30 days"), pass it through (most
 tools take a `days` argument). Default to the last 7 days.
 
+**Scope to one session.** `token_usage` also takes `session_id`. If the user passes
+a session id — or says "this session", "latest", or "current" — report just that
+one session instead of a window:
+- a specific id → `token_usage(session_id=<id>)`.
+- "this session" / "latest" / "current" → call `mcp__openstory__list_sessions`,
+  take the most recent `ongoing` session for this host/user, then pass its id.
+- skip `daily_token_usage` in this mode (there's no multi-day timeline for one session).
+
 If those tools aren't available, OpenStory isn't connected. Say so and tell the
 user to start it (`openstory serve`) and connect the MCP — don't guess numbers.
 
@@ -39,6 +47,15 @@ Tokens / day
 Round money to whole dollars. Build the bar lengths proportional to each day's
 cost. Close with one line of narration: the spendiest day, and the single biggest
 call if the data exposes it.
+
+**Single-session mode** (when scoped to one `session_id`): skip the daily timeline
+and emit one tight block instead —
+
+```
+Agent spend — this session (<model>)
+$<total> · <messages> messages · <total_tokens> tokens · cache saved $<saved> (<pct>% off)
+<first_event date> → <last_event date> · <project>
+```
 
 ## When NOT to use this skill
 
