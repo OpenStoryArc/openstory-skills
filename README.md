@@ -11,10 +11,23 @@ backed by your own session store.
 
 OpenStory running and reachable. The skills talk to the OpenStory **MCP server**,
 which the plugin declares for you (`.mcp.json`). It reads from your OpenStory REST
-API — default `http://localhost:3002`, override with `OPENSTORY_API_URL`.
+API, defaulting to `http://localhost:3002` (built into the binary).
 
 - Install + run OpenStory (see https://openstory.work).
 - Make sure `open-story-mcp` is on your `PATH` (Homebrew install provides it).
+
+**Pointing at a remote or token-secured instance.** Add an `env` block to
+`.mcp.json` with a **literal** value — Claude Code does *not* expand
+`${VAR:-default}` shell syntax in `.mcp.json`, it passes the string verbatim, so a
+default-expansion expression becomes a bogus URL and every query silently returns
+empty:
+
+```json
+"env": {
+  "OPENSTORY_API_URL": "https://your-instance",
+  "OPENSTORY_API_TOKEN": "your-token"
+}
+```
 
 ## Install
 
