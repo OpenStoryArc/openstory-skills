@@ -30,15 +30,12 @@ const { tools, skills } = JSON.parse(readFileSync(new URL('../citations.json', i
 function listMcpTools() {
   return new Promise((resolve) => {
     let out = '';
+    let done = false;
     let child;
-    try {
-      child = spawn('open-story-mcp', { stdio: ['pipe', 'pipe', 'ignore'] });
-    } catch {
-      return resolve(null);
-    }
-    child.on('error', () => resolve(null)); // not on PATH
-    child.stdout.on('data', (d) => (out += d));
     const finish = () => {
+      if (done) return;
+      done = true;
+      try { child?.kill(); } catch {}
       const names = new Set();
       for (const line of out.split('\n')) {
         try {
@@ -48,11 +45,20 @@ function listMcpTools() {
       }
       resolve(names.size ? names : null);
     };
+    try {
+      child = spawn('open-story-mcp', { stdio: ['pipe', 'pipe', 'ignore'] });
+    } catch {
+      return resolve(null);
+    }
+    child.on('error', () => { if (!done) { done = true; resolve(null); } }); // not on PATH
+    // Resolve the instant the tools/list (id:2) reply lands — open-story-mcp is a
+    // server and keeps stdout open, so waiting for 'close' would hang ~15s.
+    child.stdout.on('data', (d) => { out += d; if (out.includes('"id":2')) finish(); });
     child.on('close', finish);
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'probe', version: '0' } } }) + '\n');
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }) + '\n');
     child.stdin.end();
-    setTimeout(() => { try { child.kill(); } catch {} finish(); }, 15000);
+    setTimeout(finish, 12000); // fallback only
   });
 }
 
@@ -60,17 +66,28 @@ function listMcpTools() {
 async function probeRest(restSpec, sample) {
   const m = restSpec.match(/GET (\/api\/[^\s?]+)/);
   if (!m) return { ok: null, note: 'non-REST (streaming)' };
-  let path = m[1].replace('{id}', sample.id);
+  const path = m[1].replace('{id}', sample.id);
+  // Per-session endpoints can be *legitimately* empty (a session with no errors,
+  // no patterns yet) — so 200 alone proves the data path. Aggregate endpoints
+  // (sessions list, insights, search) must actually return data.
+  const perSession = /\/sessions\/[^/]+\//.test(path);
   let url = API + path;
   if (path.includes('/search')) url += '?q=test&limit=5';
   else if (path.includes('/agent/project-context') || path.includes('/agent/recent-files')) url += `?project=${encodeURIComponent(sample.project || '')}`;
   else if (path.includes('/insights/')) url += '?days=7';
-  try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    const text = await r.text();
-    const nonTrivial = text.length > 2 && !['[]', 'null', '{}', '{"sessions":[]}'].includes(text.trim());
-    return { ok: r.status === 200 && nonTrivial, status: r.status, size: text.length };
-  } catch (e) { return { ok: false, note: String(e.message || e) }; }
+  // one retry — these endpoints can transiently time out under load
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      const text = await r.text();
+      if (r.status !== 200) return { ok: false, status: r.status, size: text.length };
+      if (perSession) return { ok: true, status: 200, size: text.length };
+      const nonTrivial = text.length > 2 && !['[]', 'null', '{}', '{"sessions":[]}'].includes(text.trim());
+      return { ok: nonTrivial, status: 200, size: text.length, note: nonTrivial ? undefined : 'empty' };
+    } catch (e) {
+      if (attempt === 1) return { ok: false, note: String(e.message || e) };
+    }
+  }
 }
 
 // ---- run ----------------------------------------------------------------------
@@ -86,6 +103,20 @@ try {
 } catch {}
 if (!sample.id) { console.error('Could not fetch a sample session from the API — is OpenStory running?'); process.exit(2); }
 
+// Probe each unique live tool ONCE, in parallel — skills share tools heavily
+// (list_sessions appears in most), so per-skill sequential probing is both slow
+// and redundant.
+const liveTools = [...new Set(
+  Object.values(skills).filter((s) => s.status !== 'pending').flatMap((s) => s.tools),
+)].filter((t) => tools[t] && tools[t].status !== 'pending');
+
+const result = {};
+await Promise.all(liveTools.map(async (t) => {
+  const tool = tools[t];
+  const bare = tool.mcp.replace(/^mcp__openstory__/, '');
+  result[t] = { avail: exposed ? exposed.has(bare) : null, rest: await probeRest(tool.rest, sample) };
+}));
+
 let failures = 0;
 const lines = [];
 for (const [name, skill] of Object.entries(skills)) {
@@ -95,13 +126,10 @@ for (const [name, skill] of Object.entries(skills)) {
   for (const t of skill.tools) {
     const tool = tools[t];
     if (!tool || tool.status === 'pending') { parts.push(`${t}:pending`); continue; }
-    const bare = tool.mcp.replace(/^mcp__openstory__/, '');
-    const avail = exposed ? exposed.has(bare) : null;
-    const rest = await probeRest(tool.rest, sample);
+    const { avail, rest } = result[t];
     const availMark = avail === false ? '✗avail' : '';
     const dataMark = rest.ok === false ? `✗data(${rest.status || rest.note})` : rest.ok === null ? 'stream' : `${rest.status}`;
-    const bad = avail === false || rest.ok === false;
-    if (bad) skillOk = false;
+    if (avail === false || rest.ok === false) skillOk = false;
     parts.push(`${t}(${[availMark, dataMark].filter(Boolean).join(',')})`);
   }
   if (!skillOk) failures++;
