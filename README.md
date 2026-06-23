@@ -11,10 +11,36 @@ backed by your own session store.
 
 OpenStory running and reachable. The skills talk to the OpenStory **MCP server**,
 which the plugin declares for you (`.mcp.json`). It reads from your OpenStory REST
-API — default `http://localhost:3002`, override with `OPENSTORY_API_URL`.
+API, defaulting to `http://localhost:3002` (built into the binary).
 
 - Install + run OpenStory (see https://openstory.work).
 - Make sure `open-story-mcp` is on your `PATH` (Homebrew install provides it).
+
+**Pointing at a remote or token-secured instance.** Two ways:
+
+1. **Export it in your shell** (simplest — no file edits, survives plugin
+   updates). Stdio MCP servers inherit your shell environment, so set the vars
+   before launching `claude`:
+
+   ```bash
+   export OPENSTORY_API_URL=https://your-instance
+   export OPENSTORY_API_TOKEN=your-token
+   ```
+
+2. **Add an `env` block to `.mcp.json`** with a **literal** value:
+
+   ```json
+   "env": {
+     "OPENSTORY_API_URL": "https://your-instance",
+     "OPENSTORY_API_TOKEN": "your-token"
+   }
+   ```
+
+   Use a literal — don't rely on `${VAR:-default}` shell-style expansion here.
+   Depending on your Claude Code version it may be passed verbatim, which makes a
+   bogus URL and every query silently returns empty. (The plugin-vendored
+   `.mcp.json` can also be overwritten on plugin update, so the shell export
+   above is the more durable option.)
 
 ## Install
 
@@ -74,8 +100,8 @@ If you already have an OpenStory MCP named `openstory` wired in another project
   plugin.json        # plugin manifest (identity + version)
   marketplace.json   # makes this repo installable as a marketplace
 skills/
-  cost/SKILL.md
-  recall/SKILL.md
+  cost/SKILL.md  recall/SKILL.md  recap/SKILL.md
+  standup/SKILL.md  coach/SKILL.md  scan/SKILL.md
 .mcp.json            # declares the OpenStory MCP server
 ```
 
