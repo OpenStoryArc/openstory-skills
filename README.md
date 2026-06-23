@@ -115,16 +115,22 @@ If you already have an OpenStory MCP named `openstory` wired in another project
 
 ## Tests
 
+Layered — see **[`TESTING.md`](./TESTING.md)** for the full methodology (incl. the
+agent rubric for behavioral testing).
+
 ```bash
-node --test test/mcp-contract.test.mjs    # zero deps; Node 18+
+# Layer 0 — static contract (runs in CI, zero deps, Node 18+)
+node --test test/mcp-contract.test.mjs     # .mcp.json: no ${...}, only env vars the binary reads
+node scripts/build-citations.mjs --check    # citation tree consistent with skills on disk
+
+# Layers 1 & 2 — data-path probe (needs a running OpenStory)
+node scripts/probe-skills.mjs               # every skill's cited tools are exposed AND return real data
 ```
 
-A static contract test over `.mcp.json`: no env value may use `${...}`
-shell-style expansion (Claude Code may pass it verbatim), and every env key must
-be one `open-story-mcp` actually reads. This is the test that would have caught
-the silent-zeros regression where the manifest shipped
-`"${OPENSTORY_API_URL:-http://localhost:3002}"`. Runs in CI on every PR
-(`.github/workflows/test.yml`).
+Layer 0 catches wiring/metadata regressions (it would have caught the silent-zeros
+`${OPENSTORY_API_URL:-…}` manifest). The probe catches the rest — a skill citing a
+tool the server doesn't expose, or an endpoint that 404s / returns empty — by
+driving every skill's data path from `citations.json` against a live store.
 
 ## Layout
 
