@@ -70,14 +70,34 @@ what keeps them from colliding with anyone else's skills).
 | `/openstory:standup` | "Write my standup for today." | `list_sessions`, `session_synopsis` |
 | `/openstory:coach` | "How am I doing / where do I get stuck?" | `session_patterns`, `session_errors`, `productivity`* |
 | `/openstory:scan` | "Anything sensitive before I share?" | `search`* (redacted summary only) |
+| `/openstory:time` | "Where does my time actually go?" | `productivity`, `list_sessions` |
+| `/openstory:tools` | "Which tools/commands do I rely on most?" | `tool_journey`, `list_sessions`* |
+| `/openstory:team` | "Who on my team is working on what?" | `list_sessions`, `session_synopsis` |
+| `/openstory:arc` | "Tell the story of `<project/topic>`." | `search`, `session_synopsis` |
+| `/openstory:prime` | "Pick up where the last session left off." | `list_sessions`, `session_synopsis`, `session_transcript` |
 
 Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
 to any OpenStory user.
 
-\* `coach` and `scan` run today on existing tools (heuristic). They get sharper
-when two server-side MCP tools land in OpenStory: `prompt_scorecard` (precise
-prompt-length + edit-thrash metrics) and `sensitivity_scan` (a full regex sweep).
-The skills already prefer those tools when present and fall back gracefully.
+\* Some skills run today on existing tools (heuristic) and get sharper when a
+dedicated server-side tool lands — `coach`/`scan` want `prompt_scorecard` +
+`sensitivity_scan`; `tools` wants `tool_histogram` (tool + command frequency).
+Each prefers its dedicated tool when present and falls back gracefully.
+
+## Traceability — the citation tree
+
+Every common prompt is traced to the skill that serves it, the MCP tools it calls,
+the REST endpoint each tool wraps, and the source line that defines it — see
+**[`CITATIONS.md`](./CITATIONS.md)** (human-readable) and **[`citations.json`](./citations.json)**
+(machine-readable, for agents). The tree is generated and CI-validated:
+
+```bash
+node scripts/build-citations.mjs          # regenerate CITATIONS.md from citations.json
+node scripts/build-citations.mjs --check   # CI: fail if a skill is undocumented or the tree is stale
+```
+
+So a new skill can't ship without a citation, and a citation can't point at a tool
+that doesn't exist.
 
 ## Local development
 
