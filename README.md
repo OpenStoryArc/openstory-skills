@@ -93,6 +93,19 @@ If you already have an OpenStory MCP named `openstory` wired in another project
 (e.g. the OpenStory repo's own `.mcp.json`), test this plugin from a directory
 *outside* that repo to avoid two servers claiming the same name.
 
+## Tests
+
+```bash
+node --test test/mcp-contract.test.mjs    # zero deps; Node 18+
+```
+
+A static contract test over `.mcp.json`: no env value may use `${...}`
+shell-style expansion (Claude Code may pass it verbatim), and every env key must
+be one `open-story-mcp` actually reads. This is the test that would have caught
+the silent-zeros regression where the manifest shipped
+`"${OPENSTORY_API_URL:-http://localhost:3002}"`. Runs in CI on every PR
+(`.github/workflows/test.yml`).
+
 ## Layout
 
 ```
@@ -103,6 +116,8 @@ skills/
   cost/SKILL.md  recall/SKILL.md  recap/SKILL.md
   standup/SKILL.md  coach/SKILL.md  scan/SKILL.md
 .mcp.json            # declares the OpenStory MCP server
+test/                # node --test contract checks over .mcp.json
+.github/workflows/   # CI: runs the contract test on every PR
 ```
 
 ## License
