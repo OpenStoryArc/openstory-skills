@@ -6,7 +6,7 @@
 > grounded against OpenStory `master`: `rs/mcp/src/http_store.rs` (the MCP→REST
 > endpoint map) and live API probes.
 
-**Coverage:** 20/21 common prompts are backed by a built skill — 15 live · 5 heuristic · 1 pending.
+**Coverage:** 21/21 common prompts are backed by a built skill — 16 live · 5 heuristic · 0 pending.
 
 This is the trace an agent can follow to trust a skill: a prompt → the skill that
 serves it → the MCP tools it calls → the REST endpoint each tool wraps → the
@@ -125,8 +125,10 @@ source line that defines it.
   - `session_errors` — `mcp__openstory__session_errors` → `GET /api/sessions/{id}/errors` — _rs/mcp/src/http_store.rs:28_
 
 - **[06.3]** "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams."
-  → `watch` _(pending — not built)_
+  → **`/openstory:watch`** _(live)_
   - `subscribe_session` — `mcp__openstory__subscribe_session` → `NATS/WS subscription (not REST)` — _rs/mcp streaming tools_
+  - `list_sessions` — `mcp__openstory__list_sessions` → `GET /api/sessions` — _rs/mcp/src/http_store.rs:22_
+  - `session_activity` — `mcp__openstory__session_activity` → `GET /api/sessions/{id}/activity` — _rs/server/src/router.rs (verified 200)_
 
 ## Data sources (every tool the skills cite)
 
@@ -144,6 +146,7 @@ source line that defines it.
 | `token_usage` | `mcp__openstory__token_usage` | `GET /api/insights/token-usage?days=&model=` | rs/mcp/src/http_store.rs:33 | live |
 | `daily_token_usage` | `mcp__openstory__daily_token_usage` | `GET /api/insights/token-usage/daily?days=` | rs/mcp/src/http_store.rs:34 | live |
 | `subscribe_session` | `mcp__openstory__subscribe_session` | `NATS/WS subscription (not REST)` | rs/mcp streaming tools | live |
+| `session_activity` | `mcp__openstory__session_activity` | `GET /api/sessions/{id}/activity` | rs/server/src/router.rs (verified 200) | live |
 | `tool_histogram` | `mcp__openstory__tool_histogram (proposed)` | `would wrap GET /api/insights/tool-evolution (live) + bash-command parsing` | PROPOSED — see docs/BACKLOG.md | pending |
 
 ## Skills
@@ -161,11 +164,11 @@ source line that defines it.
 | `/openstory:team` | Who on my team is working on what? | live | `list_sessions`, `session_synopsis` |
 | `/openstory:arc` | Tell the story of <project/topic>. | live | `search`, `session_synopsis` |
 | `/openstory:prime` | Pick up where the last session left off. | live | `list_sessions`, `session_synopsis`, `session_transcript` |
-| `watch` | Watch a branch's work as it streams. | pending | `subscribe_session` |
+| `/openstory:watch` | Watch a branch's work as it streams. | live | `subscribe_session`, `list_sessions`, `session_activity`, `tool_journey` |
 
 ## Gaps
 
-- **[06.3]** needs `watch` (not yet built)
+- None — every prompt resolves to a built skill.
 
 **Pending server tools** (skills degrade gracefully until these land):
 - `tool_histogram` — PROPOSED — see docs/BACKLOG.md

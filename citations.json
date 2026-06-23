@@ -13,6 +13,7 @@
     "token_usage":        { "mcp": "mcp__openstory__token_usage",        "rest": "GET /api/insights/token-usage?days=&model=", "returns": "aggregate tokens + cost estimate",    "source": "rs/mcp/src/http_store.rs:33", "status": "live" },
     "daily_token_usage":  { "mcp": "mcp__openstory__daily_token_usage",  "rest": "GET /api/insights/token-usage/daily?days=", "returns": "per-day token series",               "source": "rs/mcp/src/http_store.rs:34", "status": "live" },
     "subscribe_session":  { "mcp": "mcp__openstory__subscribe_session",  "rest": "NATS/WS subscription (not REST)",         "returns": "live event stream for a session",        "source": "rs/mcp streaming tools", "status": "live" },
+    "session_activity":   { "mcp": "mcp__openstory__session_activity",   "rest": "GET /api/sessions/{id}/activity",         "returns": "recent activity for a session",          "source": "rs/server/src/router.rs (verified 200)", "status": "live" },
     "tool_histogram":     { "mcp": "mcp__openstory__tool_histogram (proposed)", "rest": "would wrap GET /api/insights/tool-evolution (live) + bash-command parsing", "returns": "aggregate tool + command frequency", "source": "PROPOSED — see docs/BACKLOG.md", "status": "pending" }
   },
   "skills": {
@@ -27,7 +28,7 @@
     "team":    { "question": "Who on my team is working on what?",       "status": "live",      "tools": ["list_sessions", "session_synopsis"] },
     "arc":     { "question": "Tell the story of <project/topic>.",       "status": "live",      "tools": ["search", "session_synopsis"] },
     "prime":   { "question": "Pick up where the last session left off.", "status": "live",      "tools": ["list_sessions", "session_synopsis", "session_transcript"] },
-    "watch":   { "question": "Watch a branch's work as it streams.",     "status": "pending",   "tools": ["subscribe_session"] }
+    "watch":   { "question": "Watch a branch's work as it streams.",     "status": "live",      "tools": ["subscribe_session", "list_sessions", "session_activity", "tool_journey"] }
   },
   "prompts": [
     { "id": "01.1", "section": "Know your own work", "skill": "recap",   "evidence": "live",        "tools": ["project_pulse", "list_sessions"],                       "text": "Summarize everything I've worked on this week across all my projects — group it by project and tell me what actually shipped." },
@@ -55,6 +56,6 @@
 
     { "id": "06.1", "section": "Ground your agent",  "skill": "prime",   "evidence": "live",        "tools": ["list_sessions", "session_synopsis", "session_transcript"], "text": "Before you start, query OpenStory for prior context on this project and pick up where the last session left off." },
     { "id": "06.2", "section": "Ground your agent",  "skill": "recall",  "evidence": "live",        "tools": ["search", "session_errors"],                             "text": "Use OpenStory to check whether we've hit this error before — and what fixed it — before debugging from scratch." },
-    { "id": "06.3", "section": "Ground your agent",  "skill": "watch",   "evidence": "pending",     "tools": ["subscribe_session"],                                    "text": "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams." }
+    { "id": "06.3", "section": "Ground your agent",  "skill": "watch",   "evidence": "live",        "tools": ["subscribe_session", "list_sessions", "session_activity"],  "text": "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams." }
   ]
 }

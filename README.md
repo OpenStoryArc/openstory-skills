@@ -75,6 +75,7 @@ what keeps them from colliding with anyone else's skills).
 | `/openstory:team` | "Who on my team is working on what?" | `list_sessions`, `session_synopsis` |
 | `/openstory:arc` | "Tell the story of `<project/topic>`." | `search`, `session_synopsis` |
 | `/openstory:prime` | "Pick up where the last session left off." | `list_sessions`, `session_synopsis`, `session_transcript` |
+| `/openstory:watch` | "Watch a branch's work as it streams." | `subscribe_session`, `list_sessions` |
 
 Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
 to any OpenStory user.
