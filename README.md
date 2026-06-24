@@ -7,6 +7,39 @@ backed by your own session store.
 > A mirror, not a leash. The skills only read your OpenStory data; they never
 > touch your code or your repos.
 
+## Quickstart
+
+Zero to your first report in three steps. Needs [Claude Code](https://claude.com/claude-code)
+and [Homebrew](https://brew.sh).
+
+**1. Install OpenStory's engine** — the store + the `open-story-mcp` binary the skills read:
+
+```bash
+brew install openstoryarc/openstory/openstory openstoryarc/openstory/openstory-mcp
+brew services run openstoryarc/openstory/openstory   # starts your store → http://localhost:3002
+```
+
+**2. Install these skills** — a Claude Code **plugin** (not brew):
+
+```bash
+/plugin marketplace add openstoryarc/openstory-skills
+/plugin install openstory@openstory-skills
+/reload-plugins
+```
+
+**3. Ask your history anything:**
+
+```bash
+/openstory:cost            # what your agent sessions have cost
+/openstory:recap           # what you shipped this week
+/openstory:recall nats     # the last time you touched <topic>, with the commands
+```
+
+That's it. The skills read **your own** OpenStory store via `open-story-mcp` (REST,
+`localhost:3002` by default — see [Prerequisite](#prerequisite) for a remote/secured
+instance). Full skill list is below; how each prompt maps prompt → skill → tool →
+endpoint → code is traced in [`CITATIONS.md`](./CITATIONS.md).
+
 ## Prerequisite
 
 OpenStory running and reachable. The skills talk to the OpenStory **MCP server**,
