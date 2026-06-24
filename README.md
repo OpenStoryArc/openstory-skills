@@ -7,6 +7,39 @@ backed by your own session store.
 > A mirror, not a leash. The skills only read your OpenStory data; they never
 > touch your code or your repos.
 
+## Quickstart
+
+Zero to your first report in three steps. Needs [Claude Code](https://claude.com/claude-code)
+and [Homebrew](https://brew.sh).
+
+**1. Install OpenStory's engine** — the store + the `open-story-mcp` binary the skills read:
+
+```bash
+brew install openstoryarc/openstory/openstory openstoryarc/openstory/openstory-mcp
+brew services run openstoryarc/openstory/openstory   # starts your store → http://localhost:3002
+```
+
+**2. Install these skills** — a Claude Code **plugin** (not brew):
+
+```bash
+/plugin marketplace add openstoryarc/openstory-skills
+/plugin install openstory@openstory-skills
+/reload-plugins
+```
+
+**3. Ask your history anything:**
+
+```bash
+/openstory:cost            # what your agent sessions have cost
+/openstory:recap           # what you shipped this week
+/openstory:recall nats     # the last time you touched <topic>, with the commands
+```
+
+That's it. The skills read **your own** OpenStory store via `open-story-mcp` (REST,
+`localhost:3002` by default — see [Prerequisite](#prerequisite) for a remote/secured
+instance). Full skill list is below; how each prompt maps prompt → skill → tool →
+endpoint → code is traced in [`CITATIONS.md`](./CITATIONS.md).
+
 ## Prerequisite
 
 OpenStory running and reachable. The skills talk to the OpenStory **MCP server**,
@@ -70,14 +103,35 @@ what keeps them from colliding with anyone else's skills).
 | `/openstory:standup` | "Write my standup for today." | `list_sessions`, `session_synopsis` |
 | `/openstory:coach` | "How am I doing / where do I get stuck?" | `session_patterns`, `session_errors`, `productivity`* |
 | `/openstory:scan` | "Anything sensitive before I share?" | `search`* (redacted summary only) |
+| `/openstory:time` | "Where does my time actually go?" | `productivity`, `list_sessions` |
+| `/openstory:tools` | "Which tools/commands do I rely on most?" | `tool_journey`, `list_sessions`* |
+| `/openstory:team` | "Who on my team is working on what?" | `list_sessions`, `session_synopsis` |
+| `/openstory:arc` | "Tell the story of `<project/topic>`." | `search`, `session_synopsis` |
+| `/openstory:prime` | "Pick up where the last session left off." | `list_sessions`, `session_synopsis`, `session_transcript` |
+| `/openstory:watch` | "Watch a branch's work as it streams." | `subscribe_session`, `list_sessions` |
 
 Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
 to any OpenStory user.
 
-\* `coach` and `scan` run today on existing tools (heuristic). They get sharper
-when two server-side MCP tools land in OpenStory: `prompt_scorecard` (precise
-prompt-length + edit-thrash metrics) and `sensitivity_scan` (a full regex sweep).
-The skills already prefer those tools when present and fall back gracefully.
+\* Some skills run today on existing tools (heuristic) and get sharper when a
+dedicated server-side tool lands — `coach`/`scan` want `prompt_scorecard` +
+`sensitivity_scan`; `tools` wants `tool_histogram` (tool + command frequency).
+Each prefers its dedicated tool when present and falls back gracefully.
+
+## Traceability — the citation tree
+
+Every common prompt is traced to the skill that serves it, the MCP tools it calls,
+the REST endpoint each tool wraps, and the source line that defines it — see
+**[`CITATIONS.md`](./CITATIONS.md)** (human-readable) and **[`citations.json`](./citations.json)**
+(machine-readable, for agents). The tree is generated and CI-validated:
+
+```bash
+node scripts/build-citations.mjs          # regenerate CITATIONS.md from citations.json
+node scripts/build-citations.mjs --check   # CI: fail if a skill is undocumented or the tree is stale
+```
+
+So a new skill can't ship without a citation, and a citation can't point at a tool
+that doesn't exist.
 
 ## Local development
 
@@ -95,16 +149,22 @@ If you already have an OpenStory MCP named `openstory` wired in another project
 
 ## Tests
 
+Layered — see **[`TESTING.md`](./TESTING.md)** for the full methodology (incl. the
+agent rubric for behavioral testing).
+
 ```bash
-node --test test/mcp-contract.test.mjs    # zero deps; Node 18+
+# Layer 0 — static contract (runs in CI, zero deps, Node 18+)
+node --test test/mcp-contract.test.mjs     # .mcp.json: no ${...}, only env vars the binary reads
+node scripts/build-citations.mjs --check    # citation tree consistent with skills on disk
+
+# Layers 1 & 2 — data-path probe (needs a running OpenStory)
+node scripts/probe-skills.mjs               # every skill's cited tools are exposed AND return real data
 ```
 
-A static contract test over `.mcp.json`: no env value may use `${...}`
-shell-style expansion (Claude Code may pass it verbatim), and every env key must
-be one `open-story-mcp` actually reads. This is the test that would have caught
-the silent-zeros regression where the manifest shipped
-`"${OPENSTORY_API_URL:-http://localhost:3002}"`. Runs in CI on every PR
-(`.github/workflows/test.yml`).
+Layer 0 catches wiring/metadata regressions (it would have caught the silent-zeros
+`${OPENSTORY_API_URL:-…}` manifest). The probe catches the rest — a skill citing a
+tool the server doesn't expose, or an endpoint that 404s / returns empty — by
+driving every skill's data path from `citations.json` against a live store.
 
 ## Layout
 

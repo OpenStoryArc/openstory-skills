@@ -16,3 +16,5 @@ jobs:
           node-version: '20'
       - name: Validate plugin manifest
         run: node --test test/mcp-contract.test.mjs
+      - name: Validate citation tree (in sync with skills on disk)
+        run: node scripts/build-citations.mjs --check
