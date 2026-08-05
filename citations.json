@@ -17,7 +17,7 @@
     "tool_histogram":     { "mcp": "mcp__openstory__tool_histogram (proposed)", "rest": "would wrap GET /api/insights/tool-evolution (live) + bash-command parsing", "returns": "aggregate tool + command frequency", "source": "PROPOSED — see docs/BACKLOG.md", "status": "pending" },
     "agent_search":       { "mcp": "mcp__openstory__agent_search",       "rest": "GET /api/search?q=&limit= (grouped by session)", "returns": "FTS hits grouped by session, agent-friendly shape", "source": "rs/mcp/src/tools/search.rs", "status": "live" },
     "session_story":      { "mcp": "mcp__openstory__session_story",      "rest": "GET /api/sessions/{id}/events (+ patterns, composed)", "returns": "session fact sheet: records, tools, patterns, prompt timeline", "source": "rs/mcp/src/tools/story.rs", "status": "live" },
-    "navigate_to":        { "mcp": "mcp__openstory__navigate_to",        "rest": "POST /api/control {action: navigate_to}", "returns": "ok + delivered — drives the dashboard to an event/session/reel", "source": "rs/mcp/src/tools/control.rs", "status": "live" },
+    "navigate_to":        { "mcp": "mcp__openstory__navigate_to (proposed)", "rest": "would wrap POST /api/control {action: navigate_to}", "returns": "ok + delivered — drives the dashboard to an event/session/reel", "source": "PROPOSED — OpenStory fix/grok-ui-bugs branch (c7d7af2) → feat/reels: rs/mcp/src/tools/control.rs (confirmed absent from origin/master's control.rs/mod.rs)", "status": "pending" },
     "where_is_user":      { "mcp": "mcp__openstory__where_is_user",      "rest": "GET /api/ui-state", "returns": "one-line summary of the user's current dashboard position", "source": "rs/mcp/src/tools/control.rs", "status": "live" },
     "save_reel":          { "mcp": "mcp__openstory__save_reel (proposed)", "rest": "would wrap POST /api/reels (feat/reels branch)", "returns": "{ok, id} or {ok:false, invalid_stops}", "source": "PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs", "status": "pending" },
     "list_reels":         { "mcp": "mcp__openstory__list_reels (proposed)", "rest": "would wrap GET /api/reels (feat/reels branch)", "returns": "[{id, title, created, author, stopCount}]", "source": "PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs", "status": "pending" },
@@ -36,7 +36,7 @@
     "arc":     { "question": "Tell the story of <project/topic>.",       "status": "live",      "tools": ["search", "session_synopsis"] },
     "prime":   { "question": "Pick up where the last session left off.", "status": "live",      "tools": ["list_sessions", "session_synopsis", "session_transcript"] },
     "watch":   { "question": "Watch a branch's work as it streams.",     "status": "live",      "tools": ["subscribe_session", "list_sessions", "session_activity", "tool_journey"] },
-    "reel":    { "question": "Turn <topic> into a saved, replayable reel.", "status": "heuristic", "tools": ["agent_search", "search", "session_story", "session_synopsis", "save_reel", "list_reels", "play_reel", "where_is_user"] }
+    "reel":    { "question": "Turn <topic> into a saved, replayable reel.", "status": "pending", "tools": ["agent_search", "search", "session_story", "session_synopsis", "save_reel", "list_reels", "play_reel", "where_is_user"] }
   },
   "prompts": [
     { "id": "01.1", "section": "Know your own work", "skill": "recap",   "evidence": "live",        "tools": ["project_pulse", "list_sessions"],                       "text": "Summarize everything I've worked on this week across all my projects — group it by project and tell me what actually shipped." },
@@ -66,8 +66,8 @@
     { "id": "06.2", "section": "Ground your agent",  "skill": "recall",  "evidence": "live",        "tools": ["search", "session_errors"],                             "text": "Use OpenStory to check whether we've hit this error before — and what fixed it — before debugging from scratch." },
     { "id": "06.3", "section": "Ground your agent",  "skill": "watch",   "evidence": "live",        "tools": ["subscribe_session", "list_sessions", "session_activity"],  "text": "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams." },
 
-    { "id": "07.1", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "heuristic",   "tools": ["agent_search", "session_story", "save_reel"],           "text": "Turn the story of the nats leaf migration into a reel I can save and replay." },
-    { "id": "07.2", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "heuristic",   "tools": ["search", "session_synopsis", "save_reel"],              "text": "Save this session as a reel with a closer line, then play it for me." },
-    { "id": "07.3", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "heuristic",   "tools": ["list_reels", "play_reel", "where_is_user"],             "text": "Replay that reel we made about the mongo migration." }
+    { "id": "07.1", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["agent_search", "session_story", "save_reel"],           "text": "Turn the story of the nats leaf migration into a reel I can save and replay." },
+    { "id": "07.2", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["search", "session_synopsis", "save_reel"],              "text": "Save this session as a reel with a closer line, then play it for me." },
+    { "id": "07.3", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["list_reels", "play_reel", "where_is_user"],             "text": "Replay that reel we made about the mongo migration." }
   ]
 }

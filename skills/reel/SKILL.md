@@ -59,6 +59,19 @@ voice). Then:
 3. Mention the reel is saved and replayable any time from the Reels tab —
    this isn't a one-shot demo, it's now part of their history.
 
+**Replaying an existing reel.** If the user is asking to replay something
+already saved ("play that reel again", "replay the one about X") rather than
+make a new one, skip Phase 1 and 2 entirely:
+
+1. Call `mcp__openstory__list_reels` — it returns every saved reel
+   (`{id, title, created, author, stopCount}`).
+2. Match by title/topic against what the user described. If more than one
+   is a plausible match, ask which one rather than guessing.
+3. If nothing matches, say so plainly and offer to make a new reel instead
+   — never guess an id or invent a reel that isn't in the list.
+4. Once matched, `play_reel { id }` with the real id from `list_reels`, then
+   follow the same `where_is_user` → hand back → confirm steps above.
+
 ## When NOT to use this skill
 
 - One-off session narration without saving → `session_story` + `navigate_to`
