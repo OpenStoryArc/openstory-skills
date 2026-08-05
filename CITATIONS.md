@@ -6,7 +6,7 @@
 > grounded against OpenStory `master`: `rs/mcp/src/http_store.rs` (the MCP→REST
 > endpoint map) and live API probes.
 
-**Coverage:** 21/21 common prompts are backed by a built skill — 16 live · 5 heuristic · 0 pending.
+**Coverage:** 24/24 common prompts are backed by a built skill — 16 live · 8 heuristic · 0 pending.
 
 This is the trace an agent can follow to trust a skill: a prompt → the skill that
 serves it → the MCP tools it calls → the REST endpoint each tool wraps → the
@@ -130,6 +130,26 @@ source line that defines it.
   - `list_sessions` — `mcp__openstory__list_sessions` → `GET /api/sessions` — _rs/mcp/src/http_store.rs:22_
   - `session_activity` — `mcp__openstory__session_activity` → `GET /api/sessions/{id}/activity` — _rs/server/src/router.rs (verified 200)_
 
+### 07 · Tell it as a reel
+
+- **[07.1]** "Turn the story of the nats leaf migration into a reel I can save and replay."
+  → **`/openstory:reel`** _(heuristic)_
+  - `agent_search` — `mcp__openstory__agent_search` → `GET /api/search?q=&limit= (grouped by session)` — _rs/mcp/src/tools/search.rs_
+  - `session_story` — `mcp__openstory__session_story` → `GET /api/sessions/{id}/events (+ patterns, composed)` — _rs/mcp/src/tools/story.rs_
+  - `save_reel` — `mcp__openstory__save_reel (proposed)` → `would wrap POST /api/reels (feat/reels branch)` — _PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs_ **(pending)**
+
+- **[07.2]** "Save this session as a reel with a closer line, then play it for me."
+  → **`/openstory:reel`** _(heuristic)_
+  - `search` — `mcp__openstory__search` → `GET /api/search?q=&limit=&session_id=` — _rs/mcp/src/http_store.rs:35_
+  - `session_synopsis` — `mcp__openstory__session_synopsis` → `GET /api/sessions/{id}/synopsis` — _rs/mcp/src/http_store.rs:25_
+  - `save_reel` — `mcp__openstory__save_reel (proposed)` → `would wrap POST /api/reels (feat/reels branch)` — _PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs_ **(pending)**
+
+- **[07.3]** "Replay that reel we made about the mongo migration."
+  → **`/openstory:reel`** _(heuristic)_
+  - `list_reels` — `mcp__openstory__list_reels (proposed)` → `would wrap GET /api/reels (feat/reels branch)` — _PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs_ **(pending)**
+  - `play_reel` — `mcp__openstory__play_reel (proposed)` → `would wrap POST /api/control {action: navigate_to, params: {kind: reel}} (feat/reels branch)` — _PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs_ **(pending)**
+  - `where_is_user` — `mcp__openstory__where_is_user` → `GET /api/ui-state` — _rs/mcp/src/tools/control.rs_
+
 ## Data sources (every tool the skills cite)
 
 | Tool | MCP | REST endpoint | Source | Status |
@@ -148,6 +168,13 @@ source line that defines it.
 | `subscribe_session` | `mcp__openstory__subscribe_session` | `NATS/WS subscription (not REST)` | rs/mcp streaming tools | live |
 | `session_activity` | `mcp__openstory__session_activity` | `GET /api/sessions/{id}/activity` | rs/server/src/router.rs (verified 200) | live |
 | `tool_histogram` | `mcp__openstory__tool_histogram (proposed)` | `would wrap GET /api/insights/tool-evolution (live) + bash-command parsing` | PROPOSED — see docs/BACKLOG.md | pending |
+| `agent_search` | `mcp__openstory__agent_search` | `GET /api/search?q=&limit= (grouped by session)` | rs/mcp/src/tools/search.rs | live |
+| `session_story` | `mcp__openstory__session_story` | `GET /api/sessions/{id}/events (+ patterns, composed)` | rs/mcp/src/tools/story.rs | live |
+| `navigate_to` | `mcp__openstory__navigate_to` | `POST /api/control {action: navigate_to}` | rs/mcp/src/tools/control.rs | live |
+| `where_is_user` | `mcp__openstory__where_is_user` | `GET /api/ui-state` | rs/mcp/src/tools/control.rs | live |
+| `save_reel` | `mcp__openstory__save_reel (proposed)` | `would wrap POST /api/reels (feat/reels branch)` | PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs | pending |
+| `list_reels` | `mcp__openstory__list_reels (proposed)` | `would wrap GET /api/reels (feat/reels branch)` | PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs | pending |
+| `play_reel` | `mcp__openstory__play_reel (proposed)` | `would wrap POST /api/control {action: navigate_to, params: {kind: reel}} (feat/reels branch)` | PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs | pending |
 
 ## Skills
 
@@ -165,6 +192,7 @@ source line that defines it.
 | `/openstory:arc` | Tell the story of <project/topic>. | live | `search`, `session_synopsis` |
 | `/openstory:prime` | Pick up where the last session left off. | live | `list_sessions`, `session_synopsis`, `session_transcript` |
 | `/openstory:watch` | Watch a branch's work as it streams. | live | `subscribe_session`, `list_sessions`, `session_activity`, `tool_journey` |
+| `/openstory:reel` | Turn <topic> into a saved, replayable reel. | heuristic | `agent_search`, `search`, `session_story`, `session_synopsis`, `save_reel`, `list_reels`, `play_reel`, `where_is_user` |
 
 ## Gaps
 
@@ -172,6 +200,9 @@ source line that defines it.
 
 **Pending server tools** (skills degrade gracefully until these land):
 - `tool_histogram` — PROPOSED — see docs/BACKLOG.md
+- `save_reel` — PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs
+- `list_reels` — PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs, rs/server/src/api.rs
+- `play_reel` — PROPOSED — OpenStory feat/reels branch: rs/mcp/src/tools/reels.rs
 
 ---
 _Evidence tags: **live** = queried against your store · **heuristic** = composed from existing tools, sharper when a dedicated tool lands · **illustrative** = representative shape._

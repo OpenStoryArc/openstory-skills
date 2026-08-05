@@ -109,6 +109,7 @@ what keeps them from colliding with anyone else's skills).
 | `/openstory:arc` | "Tell the story of `<project/topic>`." | `search`, `session_synopsis` |
 | `/openstory:prime` | "Pick up where the last session left off." | `list_sessions`, `session_synopsis`, `session_transcript` |
 | `/openstory:watch` | "Watch a branch's work as it streams." | `subscribe_session`, `list_sessions` |
+| `/openstory:reel <topic>` | "Turn X into a saved, replayable reel." | `agent_search`, `session_story`, `save_reel`†, `play_reel`† |
 
 Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
 to any OpenStory user.
@@ -117,6 +118,10 @@ to any OpenStory user.
 dedicated server-side tool lands — `coach`/`scan` want `prompt_scorecard` +
 `sensitivity_scan`; `tools` wants `tool_histogram` (tool + command frequency).
 Each prefers its dedicated tool when present and falls back gracefully.
+
+† `reel`'s authoring phase needs `save_reel` / `list_reels` / `play_reel`, which
+ship on OpenStory's `feat/reels` branch — research (`agent_search`, `session_story`)
+works today; saving and playback light up once that branch lands on `master`.
 
 ## Traceability — the citation tree
 
