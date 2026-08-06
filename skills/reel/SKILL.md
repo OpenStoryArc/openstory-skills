@@ -9,6 +9,33 @@ Turn a topic from the user's own OpenStory history into a saved, replayable
 reel — then play it on their dashboard. Three phases, MCP-only. The skill
 argument is the topic, e.g. `/openstory:reel the nats leaf migration`.
 
+## Phase 0 — pick a shape
+
+Choose a narrative shape BEFORE hunting events: the shape turns Phase 1 from
+"find interesting moments" into a shopping list. State your chosen shape when
+you present the reel. Five shapes cover most stories:
+
+- **Pyramid** (Minto) — stop 1 makes the point on its strongest event; stops
+  2–4 are three independent, non-overlapping evidence events; the closer
+  restates the point. Use to convince: "the migration worked", "this refactor
+  paid off". Shopping list: one thesis moment + three distinct proofs.
+- **ABT** (And, But, Therefore) — stops walk "this was true AND this… BUT
+  then… THEREFORE…". The minimal story spine; the default for incidents,
+  debugging sagas, and status stories. 3–5 stops.
+- **Story spine** (Pixar) — narration stems: "Every day… until one day…
+  because of that… because of that… until finally…". Use for longer arcs
+  (5–8 stops) where the journey is the point.
+- **Kishōtenketsu** — introduction, development, TWIST, conclusion. Needs no
+  conflict; the twist stop is often an honest surprise from the record —
+  including what the record does NOT contain. Use for "here's what actually
+  happened" stories with no villain.
+- **Sparkline** (Duarte) — alternate "what is" stops (the gap, the bug, the
+  cost) with "what could be" beats, closer lands on the new normal. Use for
+  pitches and proposals.
+
+Unsure? ABT. The reel format is stops + closer, so point-first shapes put
+the claim in stop 1's `line`; the closer is your restatement slot.
+
 ## Phase 1 — research (honesty rules)
 
 Call the OpenStory MCP tools (named `mcp__openstory__*`; fetch schemas via
