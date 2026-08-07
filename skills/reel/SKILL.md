@@ -57,6 +57,13 @@ tool result. Rules:
   is the circularity trap, not a story.
 - Note out loud what the record does NOT contain (gaps, missing sessions,
   topics with thin coverage) rather than papering over them.
+- **Pick spotlight-worthy events.** The Event Spotlight projects the event's
+  raw text full-screen — a user's typed ask or an assistant's conclusion
+  reads like a scene; a tool call's JSON payload reads like a stack trace.
+  Prefer prose events (user_message, assistant_message). Use a tool event
+  only when its output genuinely reads as text (a git push summary, a
+  one-line ok:true) — and use `clipAt` to crop long events to the line that
+  carries the beat.
 
 ## Phase 2 — author
 
