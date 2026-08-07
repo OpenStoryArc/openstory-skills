@@ -103,27 +103,37 @@ what keeps them from colliding with anyone else's skills).
 | `/openstory:standup` | "Write my standup for today." | `list_sessions`, `session_synopsis` |
 | `/openstory:coach` | "How am I doing / where do I get stuck?" | `session_patterns`, `session_errors`, `productivity`* |
 | `/openstory:scan` | "Anything sensitive before I share?" | `search`* (redacted summary only) |
+| `/openstory:exposure` | "What would a third party infer about me?" | `productivity`, `daily_token_usage`, `project_pulse` ‡ |
 | `/openstory:time` | "Where does my time actually go?" | `productivity`, `list_sessions` |
 | `/openstory:tools` | "Which tools/commands do I rely on most?" | `tool_journey`, `list_sessions`* |
 | `/openstory:team` | "Who on my team is working on what?" | `list_sessions`, `session_synopsis` |
 | `/openstory:arc` | "Tell the story of `<project/topic>`." | `search`, `session_synopsis` |
 | `/openstory:prime` | "Pick up where the last session left off." | `list_sessions`, `session_synopsis`, `session_transcript` |
 | `/openstory:watch` | "Watch a branch's work as it streams." | `subscribe_session`, `list_sessions` |
-| `/openstory:reel <topic>` † | "Turn X into a saved, replayable reel." | `agent_search`, `session_story`, `save_reel`, `list_reels`, `play_reel` |
+| `/openstory:reel <topic>` | "Turn X into a saved, replayable reel." | `agent_search`, `session_story`, `save_reel`, `list_reels`, `play_reel` |
 
-Each is a thin SKILL.md over OpenStory MCP tools — no scripts to install, portable
-to any OpenStory user.
+Each is a thin SKILL.md over OpenStory MCP tools — nothing to install beyond the
+plugin, portable to any OpenStory user.
+
+`scan` and `exposure` are the two halves of "is it safe to share this": `scan`
+hunts **secrets** (values that must never leave), `exposure` hunts **inferences**
+(what someone derives from data containing no secrets at all — your sleep window,
+the week your house was empty, your burn rate). A history can pass `scan` clean
+and still give away all of that.
 
 \* Some skills run today on existing tools (heuristic) and get sharper when a
 dedicated server-side tool lands — `coach`/`scan` want `prompt_scorecard` +
 `sensitivity_scan`; `tools` wants `tool_histogram` (tool + command frequency).
 Each prefers its dedicated tool when present and falls back gracefully.
 
-† `reel` is **pending**, not live yet: its research phase (`agent_search`,
-`session_story`) already works against `master`, but `save_reel` / `list_reels`
-/ `play_reel` — and the `navigate_to` control verb `play_reel` drives — only
-exist on OpenStory's `fix/grok-ui-bugs` / `feat/reels` branches. The skill file
-is written and ready; it lights up once `feat/reels` merges to `master`.
+‡ `exposure` is the one skill that ships a script — `skills/exposure/scripts/exposure_audit.py`,
+stdlib-only Python 3, bundled with the plugin (no install step). The MCP tools
+above give the metadata sections; the script adds the deterministic inference
+(sleep window across midnight, absence gaps) and the verbatim-preview section,
+which it writes to a local git-ignored file rather than into your transcript. It
+audits **your own** store only — there is no flag to point it at another person,
+by design. Run `python3 skills/exposure/scripts/exposure_audit.py --test` for its
+self-check.
 
 ## Traceability — the citation tree
 
@@ -166,6 +176,9 @@ node scripts/build-citations.mjs --check    # citation tree consistent with skil
 
 # Layers 1 & 2 — data-path probe (needs a running OpenStory)
 node scripts/probe-skills.mjs               # every skill's cited tools are exposed AND return real data
+
+# Bundled skill script — self-check (no network)
+python3 skills/exposure/scripts/exposure_audit.py --test
 ```
 
 Layer 0 catches wiring/metadata regressions (it would have caught the silent-zeros
@@ -182,6 +195,7 @@ driving every skill's data path from `citations.json` against a live store.
 skills/
   cost/SKILL.md  recall/SKILL.md  recap/SKILL.md
   standup/SKILL.md  coach/SKILL.md  scan/SKILL.md
+  exposure/SKILL.md + scripts/exposure_audit.py   # the one skill with a script
 .mcp.json            # declares the OpenStory MCP server
 test/                # node --test contract checks over .mcp.json
 .github/workflows/   # CI: runs the contract test on every PR
