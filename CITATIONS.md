@@ -6,7 +6,7 @@
 > grounded against OpenStory `master`: `rs/mcp/src/http_store.rs` (the MCP→REST
 > endpoint map) and live API probes.
 
-**Coverage:** 21/21 common prompts are backed by a built skill — 16 live · 5 heuristic · 0 pending.
+**Coverage:** 25/25 common prompts are backed by a built skill — 20 live · 5 heuristic · 0 pending.
 
 This is the trace an agent can follow to trust a skill: a prompt → the skill that
 serves it → the MCP tools it calls → the REST endpoint each tool wraps → the
@@ -38,6 +38,13 @@ source line that defines it.
 - **[01.5]** "Where does my time actually go?"
   → **`/openstory:time`** _(live)_
   - `productivity` — `mcp__openstory__productivity` → `GET /api/insights/productivity?days=` — _rs/mcp/src/http_store.rs:32_
+  - `list_sessions` — `mcp__openstory__list_sessions` → `GET /api/sessions` — _rs/mcp/src/http_store.rs:22_
+
+- **[01.6]** "If I uploaded my coding history to a third party, what would they actually learn about me?"
+  → **`/openstory:exposure`** _(live)_
+  - `productivity` — `mcp__openstory__productivity` → `GET /api/insights/productivity?days=` — _rs/mcp/src/http_store.rs:32_
+  - `daily_token_usage` — `mcp__openstory__daily_token_usage` → `GET /api/insights/token-usage/daily?days=` — _rs/mcp/src/http_store.rs:34_
+  - `project_pulse` — `mcp__openstory__project_pulse` → `GET /api/insights/pulse?days=` — _rs/mcp/src/http_store.rs:29_
   - `list_sessions` — `mcp__openstory__list_sessions` → `GET /api/sessions` — _rs/mcp/src/http_store.rs:22_
 
 ### 02 · Sense your team
@@ -130,6 +137,26 @@ source line that defines it.
   - `list_sessions` — `mcp__openstory__list_sessions` → `GET /api/sessions` — _rs/mcp/src/http_store.rs:22_
   - `session_activity` — `mcp__openstory__session_activity` → `GET /api/sessions/{id}/activity` — _rs/server/src/router.rs (verified 200)_
 
+### 07 · Tell it as a reel
+
+- **[07.1]** "Turn the story of the nats leaf migration into a reel I can save and replay."
+  → **`/openstory:reel`** _(live)_
+  - `agent_search` — `mcp__openstory__agent_search` → `GET /api/search?q=&limit= (grouped by session)` — _rs/mcp/src/tools/search.rs_
+  - `session_story` — `mcp__openstory__session_story` → `GET /api/sessions/{id}/events (+ patterns, composed)` — _rs/mcp/src/tools/story.rs_
+  - `save_reel` — `mcp__openstory__save_reel` → `POST /api/reels` — _rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)_
+
+- **[07.2]** "Save this session as a reel with a closer line, then play it for me."
+  → **`/openstory:reel`** _(live)_
+  - `search` — `mcp__openstory__search` → `GET /api/search?q=&limit=&session_id=` — _rs/mcp/src/http_store.rs:35_
+  - `session_synopsis` — `mcp__openstory__session_synopsis` → `GET /api/sessions/{id}/synopsis` — _rs/mcp/src/http_store.rs:25_
+  - `save_reel` — `mcp__openstory__save_reel` → `POST /api/reels` — _rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)_
+
+- **[07.3]** "Replay that reel we made about the mongo migration."
+  → **`/openstory:reel`** _(live)_
+  - `list_reels` — `mcp__openstory__list_reels` → `GET /api/reels` — _rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)_
+  - `play_reel` — `mcp__openstory__play_reel` → `POST /api/control {action: navigate_to, params: {kind: reel}}` — _rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07)_
+  - `where_is_user` — `mcp__openstory__where_is_user` → `GET /api/ui-state` — _rs/mcp/src/tools/control.rs_
+
 ## Data sources (every tool the skills cite)
 
 | Tool | MCP | REST endpoint | Source | Status |
@@ -148,6 +175,13 @@ source line that defines it.
 | `subscribe_session` | `mcp__openstory__subscribe_session` | `NATS/WS subscription (not REST)` | rs/mcp streaming tools | live |
 | `session_activity` | `mcp__openstory__session_activity` | `GET /api/sessions/{id}/activity` | rs/server/src/router.rs (verified 200) | live |
 | `tool_histogram` | `mcp__openstory__tool_histogram (proposed)` | `would wrap GET /api/insights/tool-evolution (live) + bash-command parsing` | PROPOSED — see docs/BACKLOG.md | pending |
+| `agent_search` | `mcp__openstory__agent_search` | `GET /api/search?q=&limit= (grouped by session)` | rs/mcp/src/tools/search.rs | live |
+| `session_story` | `mcp__openstory__session_story` | `GET /api/sessions/{id}/events (+ patterns, composed)` | rs/mcp/src/tools/story.rs | live |
+| `navigate_to` | `mcp__openstory__navigate_to` | `POST /api/control {action: navigate_to}` | rs/mcp/src/tools/control.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
+| `where_is_user` | `mcp__openstory__where_is_user` | `GET /api/ui-state` | rs/mcp/src/tools/control.rs | live |
+| `save_reel` | `mcp__openstory__save_reel` | `POST /api/reels` | rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
+| `list_reels` | `mcp__openstory__list_reels` | `GET /api/reels` | rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
+| `play_reel` | `mcp__openstory__play_reel` | `POST /api/control {action: navigate_to, params: {kind: reel}}` | rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
 
 ## Skills
 
@@ -156,6 +190,7 @@ source line that defines it.
 | `/openstory:recap` | What did I work on this week? | live | `project_pulse`, `list_sessions` |
 | `/openstory:cost` | What did my agent sessions cost? | live | `token_usage`, `daily_token_usage` |
 | `/openstory:scan` | Anything sensitive before I share? | heuristic | `search` |
+| `/openstory:exposure` | What would a third party infer about me from my history? | live | `productivity`, `daily_token_usage`, `project_pulse`, `list_sessions` |
 | `/openstory:recall` | How/where did I do X last time? | live | `search`, `session_synopsis`, `tool_journey`, `session_errors` |
 | `/openstory:standup` | Write my standup for today. | live | `list_sessions`, `session_synopsis` |
 | `/openstory:coach` | How do I work / where do I get stuck? | heuristic | `session_patterns`, `session_errors`, `productivity`, `search`, `list_sessions` |
@@ -165,6 +200,7 @@ source line that defines it.
 | `/openstory:arc` | Tell the story of <project/topic>. | live | `search`, `session_synopsis` |
 | `/openstory:prime` | Pick up where the last session left off. | live | `list_sessions`, `session_synopsis`, `session_transcript` |
 | `/openstory:watch` | Watch a branch's work as it streams. | live | `subscribe_session`, `list_sessions`, `session_activity`, `tool_journey` |
+| `/openstory:reel` | Turn <topic> into a saved, replayable reel. | live | `agent_search`, `search`, `session_story`, `session_synopsis`, `save_reel`, `list_reels`, `play_reel`, `where_is_user` |
 
 ## Gaps
 
