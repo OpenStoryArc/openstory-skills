@@ -41,8 +41,9 @@ front: the first thing the viewer hears is one breath stating what this
 story is and why it matters — THEN the shape plays. Dramatic shapes like
 kishōtenketsu still keep their twist; the BLUF orients ("a model outage
 silently killed our agents, and zero work was lost"), the twist still
-lands the how. Until the format grows an opening title card, the BLUF
-lives at the front of stop 1's `line`.
+lands the how. Put the BLUF in the `opener` field — a full-screen title
+card shown and narrated before stop 1 (builds without `opener` support:
+put it at the front of stop 1's `line` instead).
 
 ## Phase 1 — research (honesty rules)
 
@@ -78,7 +79,7 @@ tool result. Rules:
 Call `mcp__openstory__save_reel` with:
 
 ```
-{ title, stops: [{ sessionId, eventId, line, clipAt? }], closer?, author? }
+{ title, stops: [{ sessionId, eventId, line, clipAt? }], opener?, closer?, author? }
 ```
 
 Write each `line` for the ear: contractions, no symbols, 1–3 sentences — this
