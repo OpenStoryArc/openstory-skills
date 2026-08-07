@@ -36,6 +36,14 @@ you present the reel. Five shapes cover most stories:
 Unsure? ABT. The reel format is stops + closer, so point-first shapes put
 the claim in stop 1's `line`; the closer is your restatement slot.
 
+**BLUF rule (every shape, no exceptions).** Open with the bottom line up
+front: the first thing the viewer hears is one breath stating what this
+story is and why it matters — THEN the shape plays. Dramatic shapes like
+kishōtenketsu still keep their twist; the BLUF orients ("a model outage
+silently killed our agents, and zero work was lost"), the twist still
+lands the how. Until the format grows an opening title card, the BLUF
+lives at the front of stop 1's `line`.
+
 ## Phase 1 — research (honesty rules)
 
 Call the OpenStory MCP tools (named `mcp__openstory__*`; fetch schemas via
