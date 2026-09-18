@@ -35,13 +35,15 @@ Laws the write hand will enforce, so obey them now:
 
 ## Phase 3 — land it
 
-Until the `enrich` write hand ships (memory hands group D), an enrichment has
-no durable home in the store. Do one of:
-- show it to the user as the JSON block, and
-- if they want it kept, `mcp__openstory__save_reel` with the arc's opening
-  and closing events as stops and the title as the reel title — a reel is a
-  saved, replayable artifact and lives in their history.
-Never write it into a repo that would carry real session text.
+Call the write hand `mcp__openstory__enrich` with
+`{ handle, session_id, author: { host, model }, enrichment: { title, question,
+resolution, summary, slots? } }`. The server validates the shape and the laws,
+stores the record in the memory table, publishes it on `memory.>`, and tells
+open dashboards. The returned record is your receipt. From then on
+`mcp__openstory__story_summary { handle }` carries the title and slots, with you
+as the author — that is the land assert. Show the user the title and one line
+per slot. If the write is rejected, the error names why (a handle the arc
+does not hold, a missing author): fix the enrichment, never the handle.
 
 ## When NOT to use this skill
 

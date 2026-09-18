@@ -35,9 +35,14 @@ Laws (enforced by the validator behind the write hand):
 
 ## Phase 3 — land it
 
-Until group D ships, show the reading as JSON and, if the user wants it kept,
-save a reel whose stops are the first event of each paragraph with the intent
-as the line. Never write real session text into a repo.
+Readings land through `POST /api/memory { kind: "reading", … }` on the
+OpenStory server; the MCP write hand for readings is the next hand to ship,
+so until then post the reading as a `memory` write with kind `reading` and
+`standing: "final"` (the server validates it against the arc's exchanges and
+refuses any handle the arc does not hold). Once stored,
+`mcp__openstory__story_summary { handle }` carries `readings` with your
+author stamp. Show the user one line per paragraph: its intent and how many
+exchanges it groups.
 
 ## When NOT to use this skill
 

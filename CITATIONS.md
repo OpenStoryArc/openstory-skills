@@ -226,6 +226,10 @@ source line that defines it.
 | `story_search` | `mcp__openstory__story_search` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
 | `story_related` | `mcp__openstory__story_related` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
 | `subscribe_arcs` | `mcp__openstory__subscribe_arcs` | `NATS patterns.{project}.{session} (JSON array of PatternEvent)` | rs/mcp/src/subscription.rs | live |
+| `enrich` | `mcp__openstory__enrich` | `POST /api/memory kind=enrichment` | rs/mcp/src/tools/memory_write.rs | live |
+| `adjudicate_boundary` | `mcp__openstory__adjudicate_boundary` | `POST /api/memory kind=verdict` | rs/mcp/src/tools/memory_write.rs | live |
+| `link_saga` | `mcp__openstory__link_saga` | `POST /api/memory kind=saga` | rs/mcp/src/tools/memory_write.rs | live |
+| `propose_keep` | `mcp__openstory__propose_keep` | `POST /api/memory kind=keep` | rs/mcp/src/tools/memory_write.rs | live |
 
 ## Skills
 
@@ -246,9 +250,9 @@ source line that defines it.
 | `/openstory:watch` | Watch a branch's work as it streams. | live | `subscribe_session`, `list_sessions`, `session_activity`, `tool_journey` |
 | `/openstory:reel` | Turn <topic> into a saved, replayable reel. | live | `agent_search`, `search`, `session_story`, `session_synopsis`, `save_reel`, `list_reels`, `play_reel`, `where_is_user` |
 | `/openstory:remember` | What did I decide / say / defer about X, by traversal under a token budget? | live | `story_search`, `story_list`, `story_summary`, `story_descend`, `story_context`, `story_related` |
-| `/openstory:narrate` | Title, question, resolution, summary and slots for a closed arc? | live | `story_list`, `story_context`, `story_descend`, `save_reel` |
+| `/openstory:narrate` | Title, question, resolution, summary and slots for a closed arc? | live | `story_list`, `story_context`, `story_descend`, `enrich` |
 | `/openstory:segment` | What were the intents (paragraphs) inside a closed arc? | live | `story_list`, `story_context`, `save_reel` |
-| `/openstory:listen` | Narrate arcs as they close, live or by polling? | live | `story_list`, `story_context`, `subscribe_arcs`, `save_reel` |
+| `/openstory:listen` | Narrate arcs as they close, live or by polling? | live | `story_list`, `story_context`, `subscribe_arcs`, `enrich`, `adjudicate_boundary` |
 
 ## Gaps
 

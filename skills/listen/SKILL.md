@@ -44,8 +44,10 @@ notification per closed exchange or arc, each carrying `needs` and the exact
    (see `/openstory:segment`).
 3. If the arc's `ambiguous_seams` is non-empty, `prompts/get adjudicate_seam
    { handle, session_id, seam }` per seam → a verdict with a reason.
-4. Land each as the narrate/segment skills describe (JSON to the user; a reel
-   if they want it kept; write hands once memory hands group D ships).
+4. Land each through the write hands: `mcp__openstory__enrich` for the
+   enrichment, `mcp__openstory__adjudicate_boundary` per seam verdict, a
+   `reading` memory write for the final reading. Each returns the stored,
+   author-stamped record; the next `story_summary` carries it.
 
 ## On each closed exchange (push mode only)
 

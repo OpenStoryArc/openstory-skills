@@ -203,6 +203,34 @@
       "returns": "notifications/openstory/arcs per closed exchange/arc: {kind, handle, needs, prompts, skeleton, batch_seq}",
       "source": "rs/mcp/src/subscription.rs",
       "status": "live"
+    },
+    "enrich": {
+      "mcp": "mcp__openstory__enrich",
+      "rest": "POST /api/memory kind=enrichment",
+      "returns": "the stored MemoryRecord; next story_summary carries the title",
+      "source": "rs/mcp/src/tools/memory_write.rs",
+      "status": "live"
+    },
+    "adjudicate_boundary": {
+      "mcp": "mcp__openstory__adjudicate_boundary",
+      "rest": "POST /api/memory kind=verdict",
+      "returns": "the stored verdict record",
+      "source": "rs/mcp/src/tools/memory_write.rs",
+      "status": "live"
+    },
+    "link_saga": {
+      "mcp": "mcp__openstory__link_saga",
+      "rest": "POST /api/memory kind=saga",
+      "returns": "the stored saga record",
+      "source": "rs/mcp/src/tools/memory_write.rs",
+      "status": "live"
+    },
+    "propose_keep": {
+      "mcp": "mcp__openstory__propose_keep",
+      "rest": "POST /api/memory kind=keep",
+      "returns": "the stored keep record",
+      "source": "rs/mcp/src/tools/memory_write.rs",
+      "status": "live"
     }
   },
   "skills": {
@@ -353,7 +381,7 @@
         "story_list",
         "story_context",
         "story_descend",
-        "save_reel"
+        "enrich"
       ]
     },
     "segment": {
@@ -372,7 +400,8 @@
         "story_list",
         "story_context",
         "subscribe_arcs",
-        "save_reel"
+        "enrich",
+        "adjudicate_boundary"
       ]
     }
   },
