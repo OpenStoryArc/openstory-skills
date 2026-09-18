@@ -19,10 +19,14 @@ The MCP stream hand `subscribe_arcs { session_id?, from_seq? }` emits a
 notification per closed exchange or arc, each carrying `needs` and the exact
 `prompts/get` calls to make (`data.prompts`). Two ways to receive it:
 
-- **Push** — a host that delivers the server's channel notifications gets each
-  closed node as it lands. In Claude Code this needs the MCP server's
-  `claude/channel` capability (research preview); until open-story-mcp declares
-  it, Claude Code does not surface the stream.
+- **Push (Claude Code, research preview)** — run open-story-mcp in channel
+  mode: set `OPENSTORY_CHANNEL=all` (or a session id) in the server's env in
+  `.mcp.json`, and start Claude Code with
+  `claude --dangerously-load-development-channels server:openstory`. Each
+  closed node then lands in the session as
+  `<channel source="openstory" kind="arc" handle="…" needs="enrich,adjudicate">JSON</channel>`
+  with the `prompts/get` calls to make in the body. No tool call needed;
+  act on each as it arrives.
 - **Poll (works everywhere)** — treat history as a lazy list. Keep a cursor
   (the last arc `started_at` you have read) and on each tick call
   `mcp__openstory__story_list { session_id?, limit }`, take arcs newer than the
