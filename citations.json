@@ -1,75 +1,730 @@
 {
   "_comment": "Source of truth for the prompt -> skill -> MCP tool -> REST endpoint -> code citation tree. EDIT THIS FILE, then run `node scripts/build-citations.mjs` to regenerate CITATIONS.md. CI validates that every skill referenced has a SKILL.md, every tool is registered, and every prompt resolves. Citations were grounded against OpenStory master: rs/mcp/src/http_store.rs (the MCP->REST endpoint map) and live API probes.",
   "tools": {
-    "list_sessions":      { "mcp": "mcp__openstory__list_sessions",      "rest": "GET /api/sessions",                       "returns": "sessions[] (host, user, project_name, status, first_event, last_event)", "source": "rs/mcp/src/http_store.rs:22", "status": "live" },
-    "search":             { "mcp": "mcp__openstory__search",             "rest": "GET /api/search?q=&limit=&session_id=",   "returns": "full-text hits across all sessions",     "source": "rs/mcp/src/http_store.rs:35", "status": "live" },
-    "session_synopsis":   { "mcp": "mcp__openstory__session_synopsis",   "rest": "GET /api/sessions/{id}/synopsis",         "returns": "one-session summary + open threads",     "source": "rs/mcp/src/http_store.rs:25", "status": "live" },
-    "session_transcript": { "mcp": "mcp__openstory__session_transcript", "rest": "GET /api/sessions/{id}/transcript",       "returns": "reconstructed message transcript",       "source": "rs/server/src/router.rs (verified 200)", "status": "live" },
-    "session_patterns":   { "mcp": "mcp__openstory__session_patterns",   "rest": "GET /api/sessions/{id}/patterns?type=",   "returns": "detected eval-apply / sentence patterns", "source": "rs/mcp/src/http_store.rs:24", "status": "live" },
-    "session_errors":     { "mcp": "mcp__openstory__session_errors",     "rest": "GET /api/sessions/{id}/errors",           "returns": "errors hit in a session",                "source": "rs/mcp/src/http_store.rs:28", "status": "live" },
-    "tool_journey":       { "mcp": "mcp__openstory__tool_journey",       "rest": "GET /api/sessions/{id}/tool-journey",     "returns": "per-session ordered tool-use sequence",  "source": "rs/mcp/src/http_store.rs:26", "status": "live" },
-    "project_pulse":      { "mcp": "mcp__openstory__project_pulse",      "rest": "GET /api/insights/pulse?days=",           "returns": "per-project session + event counts",     "source": "rs/mcp/src/http_store.rs:29", "status": "live" },
-    "productivity":       { "mcp": "mcp__openstory__productivity",       "rest": "GET /api/insights/productivity?days=",    "returns": "events per hour of day (rhythm)",        "source": "rs/mcp/src/http_store.rs:32", "status": "live" },
-    "token_usage":        { "mcp": "mcp__openstory__token_usage",        "rest": "GET /api/insights/token-usage?days=&model=", "returns": "aggregate tokens + cost estimate",    "source": "rs/mcp/src/http_store.rs:33", "status": "live" },
-    "daily_token_usage":  { "mcp": "mcp__openstory__daily_token_usage",  "rest": "GET /api/insights/token-usage/daily?days=", "returns": "per-day token series",               "source": "rs/mcp/src/http_store.rs:34", "status": "live" },
-    "subscribe_session":  { "mcp": "mcp__openstory__subscribe_session",  "rest": "NATS/WS subscription (not REST)",         "returns": "live event stream for a session",        "source": "rs/mcp streaming tools", "status": "live" },
-    "session_activity":   { "mcp": "mcp__openstory__session_activity",   "rest": "GET /api/sessions/{id}/activity",         "returns": "recent activity for a session",          "source": "rs/server/src/router.rs (verified 200)", "status": "live" },
-    "tool_histogram":     { "mcp": "mcp__openstory__tool_histogram (proposed)", "rest": "would wrap GET /api/insights/tool-evolution (live) + bash-command parsing", "returns": "aggregate tool + command frequency", "source": "PROPOSED — see docs/BACKLOG.md", "status": "pending" },
-    "agent_search":       { "mcp": "mcp__openstory__agent_search",       "rest": "GET /api/search?q=&limit= (grouped by session)", "returns": "FTS hits grouped by session, agent-friendly shape", "source": "rs/mcp/src/tools/search.rs", "status": "live" },
-    "session_story":      { "mcp": "mcp__openstory__session_story",      "rest": "GET /api/sessions/{id}/events (+ patterns, composed)", "returns": "session fact sheet: records, tools, patterns, prompt timeline", "source": "rs/mcp/src/tools/story.rs", "status": "live" },
-    "navigate_to":        { "mcp": "mcp__openstory__navigate_to", "rest": "POST /api/control {action: navigate_to}", "returns": "ok + delivered — drives the dashboard to an event/session/reel", "source": "rs/mcp/src/tools/control.rs (merged to master in OpenStory PR #106, 2026-08-07)", "status": "live" },
-    "where_is_user":      { "mcp": "mcp__openstory__where_is_user",      "rest": "GET /api/ui-state", "returns": "one-line summary of the user's current dashboard position", "source": "rs/mcp/src/tools/control.rs", "status": "live" },
-    "save_reel":          { "mcp": "mcp__openstory__save_reel", "rest": "POST /api/reels", "returns": "{ok, id} or {ok:false, invalid_stops}", "source": "rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)", "status": "live" },
-    "list_reels":         { "mcp": "mcp__openstory__list_reels", "rest": "GET /api/reels", "returns": "[{id, title, created, author, stopCount}]", "source": "rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)", "status": "live" },
-    "play_reel":          { "mcp": "mcp__openstory__play_reel", "rest": "POST /api/control {action: navigate_to, params: {kind: reel}}", "returns": "{ok, delivered} — drives the dashboard's Reels tab", "source": "rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07)", "status": "live" }
+    "list_sessions": {
+      "mcp": "mcp__openstory__list_sessions",
+      "rest": "GET /api/sessions",
+      "returns": "sessions[] (host, user, project_name, status, first_event, last_event)",
+      "source": "rs/mcp/src/http_store.rs:22",
+      "status": "live"
+    },
+    "search": {
+      "mcp": "mcp__openstory__search",
+      "rest": "GET /api/search?q=&limit=&session_id=",
+      "returns": "full-text hits across all sessions",
+      "source": "rs/mcp/src/http_store.rs:35",
+      "status": "live"
+    },
+    "session_synopsis": {
+      "mcp": "mcp__openstory__session_synopsis",
+      "rest": "GET /api/sessions/{id}/synopsis",
+      "returns": "one-session summary + open threads",
+      "source": "rs/mcp/src/http_store.rs:25",
+      "status": "live"
+    },
+    "session_transcript": {
+      "mcp": "mcp__openstory__session_transcript",
+      "rest": "GET /api/sessions/{id}/transcript",
+      "returns": "reconstructed message transcript",
+      "source": "rs/server/src/router.rs (verified 200)",
+      "status": "live"
+    },
+    "session_patterns": {
+      "mcp": "mcp__openstory__session_patterns",
+      "rest": "GET /api/sessions/{id}/patterns?type=",
+      "returns": "detected eval-apply / sentence patterns",
+      "source": "rs/mcp/src/http_store.rs:24",
+      "status": "live"
+    },
+    "session_errors": {
+      "mcp": "mcp__openstory__session_errors",
+      "rest": "GET /api/sessions/{id}/errors",
+      "returns": "errors hit in a session",
+      "source": "rs/mcp/src/http_store.rs:28",
+      "status": "live"
+    },
+    "tool_journey": {
+      "mcp": "mcp__openstory__tool_journey",
+      "rest": "GET /api/sessions/{id}/tool-journey",
+      "returns": "per-session ordered tool-use sequence",
+      "source": "rs/mcp/src/http_store.rs:26",
+      "status": "live"
+    },
+    "project_pulse": {
+      "mcp": "mcp__openstory__project_pulse",
+      "rest": "GET /api/insights/pulse?days=",
+      "returns": "per-project session + event counts",
+      "source": "rs/mcp/src/http_store.rs:29",
+      "status": "live"
+    },
+    "productivity": {
+      "mcp": "mcp__openstory__productivity",
+      "rest": "GET /api/insights/productivity?days=",
+      "returns": "events per hour of day (rhythm)",
+      "source": "rs/mcp/src/http_store.rs:32",
+      "status": "live"
+    },
+    "token_usage": {
+      "mcp": "mcp__openstory__token_usage",
+      "rest": "GET /api/insights/token-usage?days=&model=",
+      "returns": "aggregate tokens + cost estimate",
+      "source": "rs/mcp/src/http_store.rs:33",
+      "status": "live"
+    },
+    "daily_token_usage": {
+      "mcp": "mcp__openstory__daily_token_usage",
+      "rest": "GET /api/insights/token-usage/daily?days=",
+      "returns": "per-day token series",
+      "source": "rs/mcp/src/http_store.rs:34",
+      "status": "live"
+    },
+    "subscribe_session": {
+      "mcp": "mcp__openstory__subscribe_session",
+      "rest": "NATS/WS subscription (not REST)",
+      "returns": "live event stream for a session",
+      "source": "rs/mcp streaming tools",
+      "status": "live"
+    },
+    "session_activity": {
+      "mcp": "mcp__openstory__session_activity",
+      "rest": "GET /api/sessions/{id}/activity",
+      "returns": "recent activity for a session",
+      "source": "rs/server/src/router.rs (verified 200)",
+      "status": "live"
+    },
+    "tool_histogram": {
+      "mcp": "mcp__openstory__tool_histogram (proposed)",
+      "rest": "would wrap GET /api/insights/tool-evolution (live) + bash-command parsing",
+      "returns": "aggregate tool + command frequency",
+      "source": "PROPOSED — see docs/BACKLOG.md",
+      "status": "pending"
+    },
+    "agent_search": {
+      "mcp": "mcp__openstory__agent_search",
+      "rest": "GET /api/search?q=&limit= (grouped by session)",
+      "returns": "FTS hits grouped by session, agent-friendly shape",
+      "source": "rs/mcp/src/tools/search.rs",
+      "status": "live"
+    },
+    "session_story": {
+      "mcp": "mcp__openstory__session_story",
+      "rest": "GET /api/sessions/{id}/events (+ patterns, composed)",
+      "returns": "session fact sheet: records, tools, patterns, prompt timeline",
+      "source": "rs/mcp/src/tools/story.rs",
+      "status": "live"
+    },
+    "navigate_to": {
+      "mcp": "mcp__openstory__navigate_to",
+      "rest": "POST /api/control {action: navigate_to}",
+      "returns": "ok + delivered — drives the dashboard to an event/session/reel",
+      "source": "rs/mcp/src/tools/control.rs (merged to master in OpenStory PR #106, 2026-08-07)",
+      "status": "live"
+    },
+    "where_is_user": {
+      "mcp": "mcp__openstory__where_is_user",
+      "rest": "GET /api/ui-state",
+      "returns": "one-line summary of the user's current dashboard position",
+      "source": "rs/mcp/src/tools/control.rs",
+      "status": "live"
+    },
+    "save_reel": {
+      "mcp": "mcp__openstory__save_reel",
+      "rest": "POST /api/reels",
+      "returns": "{ok, id} or {ok:false, invalid_stops}",
+      "source": "rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)",
+      "status": "live"
+    },
+    "list_reels": {
+      "mcp": "mcp__openstory__list_reels",
+      "rest": "GET /api/reels",
+      "returns": "[{id, title, created, author, stopCount}]",
+      "source": "rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07)",
+      "status": "live"
+    },
+    "play_reel": {
+      "mcp": "mcp__openstory__play_reel",
+      "rest": "POST /api/control {action: navigate_to, params: {kind: reel}}",
+      "returns": "{ok, delivered} — drives the dashboard's Reels tab",
+      "source": "rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07)",
+      "status": "live"
+    },
+    "story_list": {
+      "mcp": "mcp__openstory__story_list",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.arc",
+      "returns": "one line per arc: handle, session, question, exchange count",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_summary": {
+      "mcp": "mcp__openstory__story_summary",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.arc",
+      "returns": "an arc's top node: question, resolution, entities, down (exchange handles), across",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_descend": {
+      "mcp": "mcp__openstory__story_descend",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.exchange",
+      "returns": "children: arc → exchanges, exchange → sentences, sentence → events",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_surface": {
+      "mcp": "mcp__openstory__story_surface",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.exchange",
+      "returns": "ancestors nearest first, up to the arc",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_context": {
+      "mcp": "mcp__openstory__story_context",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.exchange",
+      "returns": "node + ancestors + siblings; never a naked event",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_search": {
+      "mcp": "mcp__openstory__story_search",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.arc",
+      "returns": "substring hits over arc question/resolution/entities and exchange prompt/result",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "story_related": {
+      "mcp": "mcp__openstory__story_related",
+      "rest": "GET /api/sessions/{id}/patterns?type=story.arc",
+      "returns": "arcs sharing entities, most shared first",
+      "source": "rs/mcp/src/tools/memory.rs",
+      "status": "live"
+    },
+    "subscribe_arcs": {
+      "mcp": "mcp__openstory__subscribe_arcs",
+      "rest": "NATS patterns.{project}.{session} (JSON array of PatternEvent)",
+      "returns": "notifications/openstory/arcs per closed exchange/arc: {kind, handle, needs, prompts, skeleton, batch_seq}",
+      "source": "rs/mcp/src/subscription.rs",
+      "status": "live"
+    }
   },
   "skills": {
-    "recap":   { "question": "What did I work on this week?",            "status": "live",      "tools": ["project_pulse", "list_sessions"] },
-    "cost":    { "question": "What did my agent sessions cost?",         "status": "live",      "tools": ["token_usage", "daily_token_usage"] },
-    "scan":    { "question": "Anything sensitive before I share?",       "status": "heuristic", "tools": ["search"] },
-    "exposure":{ "question": "What would a third party infer about me from my history?", "status": "live", "tools": ["productivity", "daily_token_usage", "project_pulse", "list_sessions"] },
-    "recall":  { "question": "How/where did I do X last time?",          "status": "live",      "tools": ["search", "session_synopsis", "tool_journey", "session_errors"] },
-    "standup": { "question": "Write my standup for today.",              "status": "live",      "tools": ["list_sessions", "session_synopsis"] },
-    "coach":   { "question": "How do I work / where do I get stuck?",    "status": "heuristic", "tools": ["session_patterns", "session_errors", "productivity", "search", "list_sessions"] },
-    "time":    { "question": "Where does my time actually go?",          "status": "live",      "tools": ["productivity", "list_sessions"] },
-    "tools":   { "question": "Which tools/commands do I rely on most?",  "status": "heuristic", "tools": ["tool_journey", "list_sessions", "tool_histogram"] },
-    "team":    { "question": "Who on my team is working on what?",       "status": "live",      "tools": ["list_sessions", "session_synopsis"] },
-    "arc":     { "question": "Tell the story of <project/topic>.",       "status": "live",      "tools": ["search", "session_synopsis"] },
-    "prime":   { "question": "Pick up where the last session left off.", "status": "live",      "tools": ["list_sessions", "session_synopsis", "session_transcript"] },
-    "watch":   { "question": "Watch a branch's work as it streams.",     "status": "live",      "tools": ["subscribe_session", "list_sessions", "session_activity", "tool_journey"] },
-    "reel":    { "question": "Turn <topic> into a saved, replayable reel.", "status": "live", "tools": ["agent_search", "search", "session_story", "session_synopsis", "save_reel", "list_reels", "play_reel", "where_is_user"] }
+    "recap": {
+      "question": "What did I work on this week?",
+      "status": "live",
+      "tools": [
+        "project_pulse",
+        "list_sessions"
+      ]
+    },
+    "cost": {
+      "question": "What did my agent sessions cost?",
+      "status": "live",
+      "tools": [
+        "token_usage",
+        "daily_token_usage"
+      ]
+    },
+    "scan": {
+      "question": "Anything sensitive before I share?",
+      "status": "heuristic",
+      "tools": [
+        "search"
+      ]
+    },
+    "exposure": {
+      "question": "What would a third party infer about me from my history?",
+      "status": "live",
+      "tools": [
+        "productivity",
+        "daily_token_usage",
+        "project_pulse",
+        "list_sessions"
+      ]
+    },
+    "recall": {
+      "question": "How/where did I do X last time?",
+      "status": "live",
+      "tools": [
+        "search",
+        "session_synopsis",
+        "tool_journey",
+        "session_errors"
+      ]
+    },
+    "standup": {
+      "question": "Write my standup for today.",
+      "status": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis"
+      ]
+    },
+    "coach": {
+      "question": "How do I work / where do I get stuck?",
+      "status": "heuristic",
+      "tools": [
+        "session_patterns",
+        "session_errors",
+        "productivity",
+        "search",
+        "list_sessions"
+      ]
+    },
+    "time": {
+      "question": "Where does my time actually go?",
+      "status": "live",
+      "tools": [
+        "productivity",
+        "list_sessions"
+      ]
+    },
+    "tools": {
+      "question": "Which tools/commands do I rely on most?",
+      "status": "heuristic",
+      "tools": [
+        "tool_journey",
+        "list_sessions",
+        "tool_histogram"
+      ]
+    },
+    "team": {
+      "question": "Who on my team is working on what?",
+      "status": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis"
+      ]
+    },
+    "arc": {
+      "question": "Tell the story of <project/topic>.",
+      "status": "live",
+      "tools": [
+        "search",
+        "session_synopsis"
+      ]
+    },
+    "prime": {
+      "question": "Pick up where the last session left off.",
+      "status": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis",
+        "session_transcript"
+      ]
+    },
+    "watch": {
+      "question": "Watch a branch's work as it streams.",
+      "status": "live",
+      "tools": [
+        "subscribe_session",
+        "list_sessions",
+        "session_activity",
+        "tool_journey"
+      ]
+    },
+    "reel": {
+      "question": "Turn <topic> into a saved, replayable reel.",
+      "status": "live",
+      "tools": [
+        "agent_search",
+        "search",
+        "session_story",
+        "session_synopsis",
+        "save_reel",
+        "list_reels",
+        "play_reel",
+        "where_is_user"
+      ]
+    },
+    "remember": {
+      "question": "What did I decide / say / defer about X, by traversal under a token budget?",
+      "status": "live",
+      "tools": [
+        "story_search",
+        "story_list",
+        "story_summary",
+        "story_descend",
+        "story_context",
+        "story_related"
+      ]
+    },
+    "narrate": {
+      "question": "Title, question, resolution, summary and slots for a closed arc?",
+      "status": "live",
+      "tools": [
+        "story_list",
+        "story_context",
+        "story_descend",
+        "save_reel"
+      ]
+    },
+    "segment": {
+      "question": "What were the intents (paragraphs) inside a closed arc?",
+      "status": "live",
+      "tools": [
+        "story_list",
+        "story_context",
+        "save_reel"
+      ]
+    },
+    "listen": {
+      "question": "Narrate arcs as they close, live or by polling?",
+      "status": "live",
+      "tools": [
+        "story_list",
+        "story_context",
+        "subscribe_arcs",
+        "save_reel"
+      ]
+    }
   },
   "prompts": [
-    { "id": "01.1", "section": "Know your own work", "skill": "recap",   "evidence": "live",        "tools": ["project_pulse", "list_sessions"],                       "text": "Summarize everything I've worked on this week across all my projects — group it by project and tell me what actually shipped." },
-    { "id": "01.2", "section": "Know your own work", "skill": "cost",    "evidence": "live",        "tools": ["token_usage", "daily_token_usage"],                     "text": "What have my agent sessions cost me? Give me the total spend, and a tokens-per-day timeline." },
-    { "id": "01.3", "section": "Know your own work", "skill": "scan",    "evidence": "illustrative","tools": ["search"],                                              "text": "Before I share my session history, scan it for anything sensitive — secrets, API keys, private details." },
-    { "id": "01.4", "section": "Know your own work", "skill": "tools",   "evidence": "heuristic",   "tools": ["tool_journey", "list_sessions"],                        "text": "Which tools and commands do I rely on most?" },
-    { "id": "01.5", "section": "Know your own work", "skill": "time",    "evidence": "live",        "tools": ["productivity", "list_sessions"],                        "text": "Where does my time actually go?" },
-    { "id": "01.6", "section": "Know your own work", "skill": "exposure","evidence": "live",        "tools": ["productivity", "daily_token_usage", "project_pulse", "list_sessions"], "text": "If I uploaded my coding history to a third party, what would they actually learn about me?" },
-
-    { "id": "02.1", "section": "Sense your team",    "skill": "team",    "evidence": "live",        "tools": ["list_sessions"],                                        "text": "Who on my team has an active session right now, and what is each person working on?" },
-    { "id": "02.2", "section": "Sense your team",    "skill": "team",    "evidence": "live",        "tools": ["list_sessions", "session_synopsis"],                    "text": "Summarize my teammates' sessions from the last day — one short paragraph each." },
-    { "id": "02.3", "section": "Sense your team",    "skill": "team",    "evidence": "live",        "tools": ["list_sessions"],                                        "text": "Show me live activity across the team in the last hour — who's streaming, on what branch." },
-    { "id": "02.4", "section": "Sense your team",    "skill": "team",    "evidence": "live",        "tools": ["list_sessions", "session_synopsis"],                    "text": "Find a teammate's sessions and summarize what they've been focused on this week." },
-
-    { "id": "03.1", "section": "Narrate the story",  "skill": "arc",     "evidence": "live",        "tools": ["search", "session_synopsis"],                           "text": "Trace the story of how this project came to be from my session history. Highlight the key decisions and turning points." },
-    { "id": "03.2", "section": "Narrate the story",  "skill": "arc",     "evidence": "live",        "tools": ["search", "session_synopsis"],                           "text": "Compile every session related to <topic> and narrate the arc, start to finish." },
-    { "id": "03.3", "section": "Narrate the story",  "skill": "standup", "evidence": "live",        "tools": ["list_sessions", "session_synopsis"],                    "text": "Write me a standup update from today's sessions: what I did, what's blocked, and what's next." },
-
-    { "id": "04.1", "section": "Coach yourself",     "skill": "coach",   "evidence": "heuristic",   "tools": ["session_patterns", "list_sessions"],                    "text": "Analyze my sessions from the last month and give me honest feedback on my prompt engineering." },
-    { "id": "04.2", "section": "Coach yourself",     "skill": "coach",   "evidence": "heuristic",   "tools": ["session_patterns", "session_errors"],                   "text": "Find where my sessions tend to stall, loop, or repeat work. What are my recurring failure patterns?" },
-    { "id": "04.3", "section": "Coach yourself",     "skill": "coach",   "evidence": "heuristic",   "tools": ["search", "list_sessions"],                              "text": "What direction has my work been pointing lately? Cluster my recent sessions by theme." },
-
-    { "id": "05.1", "section": "Recall anything",    "skill": "recall",  "evidence": "live",        "tools": ["search", "session_synopsis", "tool_journey"],           "text": "Find the last time I solved <problem>, and show me exactly how I did it." },
-    { "id": "05.2", "section": "Recall anything",    "skill": "recall",  "evidence": "live",        "tools": ["search", "tool_journey"],                               "text": "Did I ever set up <X>? Locate the session and pull out the precise commands." },
-    { "id": "05.3", "section": "Recall anything",    "skill": "recall",  "evidence": "live",        "tools": ["search"],                                               "text": "Search my sessions for <topic> and list every session that touched it, newest first." },
-
-    { "id": "06.1", "section": "Ground your agent",  "skill": "prime",   "evidence": "live",        "tools": ["list_sessions", "session_synopsis", "session_transcript"], "text": "Before you start, query OpenStory for prior context on this project and pick up where the last session left off." },
-    { "id": "06.2", "section": "Ground your agent",  "skill": "recall",  "evidence": "live",        "tools": ["search", "session_errors"],                             "text": "Use OpenStory to check whether we've hit this error before — and what fixed it — before debugging from scratch." },
-    { "id": "06.3", "section": "Ground your agent",  "skill": "watch",   "evidence": "live",        "tools": ["subscribe_session", "list_sessions", "session_activity"],  "text": "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams." },
-
-    { "id": "07.1", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["agent_search", "session_story", "save_reel"],           "text": "Turn the story of the nats leaf migration into a reel I can save and replay." },
-    { "id": "07.2", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["search", "session_synopsis", "save_reel"],              "text": "Save this session as a reel with a closer line, then play it for me." },
-    { "id": "07.3", "section": "Tell it as a reel",  "skill": "reel",    "evidence": "illustrative","tools": ["list_reels", "play_reel", "where_is_user"],             "text": "Replay that reel we made about the mongo migration." }
+    {
+      "id": "01.1",
+      "section": "Know your own work",
+      "skill": "recap",
+      "evidence": "live",
+      "tools": [
+        "project_pulse",
+        "list_sessions"
+      ],
+      "text": "Summarize everything I've worked on this week across all my projects — group it by project and tell me what actually shipped."
+    },
+    {
+      "id": "01.2",
+      "section": "Know your own work",
+      "skill": "cost",
+      "evidence": "live",
+      "tools": [
+        "token_usage",
+        "daily_token_usage"
+      ],
+      "text": "What have my agent sessions cost me? Give me the total spend, and a tokens-per-day timeline."
+    },
+    {
+      "id": "01.3",
+      "section": "Know your own work",
+      "skill": "scan",
+      "evidence": "illustrative",
+      "tools": [
+        "search"
+      ],
+      "text": "Before I share my session history, scan it for anything sensitive — secrets, API keys, private details."
+    },
+    {
+      "id": "01.4",
+      "section": "Know your own work",
+      "skill": "tools",
+      "evidence": "heuristic",
+      "tools": [
+        "tool_journey",
+        "list_sessions"
+      ],
+      "text": "Which tools and commands do I rely on most?"
+    },
+    {
+      "id": "01.5",
+      "section": "Know your own work",
+      "skill": "time",
+      "evidence": "live",
+      "tools": [
+        "productivity",
+        "list_sessions"
+      ],
+      "text": "Where does my time actually go?"
+    },
+    {
+      "id": "01.6",
+      "section": "Know your own work",
+      "skill": "exposure",
+      "evidence": "live",
+      "tools": [
+        "productivity",
+        "daily_token_usage",
+        "project_pulse",
+        "list_sessions"
+      ],
+      "text": "If I uploaded my coding history to a third party, what would they actually learn about me?"
+    },
+    {
+      "id": "02.1",
+      "section": "Sense your team",
+      "skill": "team",
+      "evidence": "live",
+      "tools": [
+        "list_sessions"
+      ],
+      "text": "Who on my team has an active session right now, and what is each person working on?"
+    },
+    {
+      "id": "02.2",
+      "section": "Sense your team",
+      "skill": "team",
+      "evidence": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis"
+      ],
+      "text": "Summarize my teammates' sessions from the last day — one short paragraph each."
+    },
+    {
+      "id": "02.3",
+      "section": "Sense your team",
+      "skill": "team",
+      "evidence": "live",
+      "tools": [
+        "list_sessions"
+      ],
+      "text": "Show me live activity across the team in the last hour — who's streaming, on what branch."
+    },
+    {
+      "id": "02.4",
+      "section": "Sense your team",
+      "skill": "team",
+      "evidence": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis"
+      ],
+      "text": "Find a teammate's sessions and summarize what they've been focused on this week."
+    },
+    {
+      "id": "03.1",
+      "section": "Narrate the story",
+      "skill": "arc",
+      "evidence": "live",
+      "tools": [
+        "search",
+        "session_synopsis"
+      ],
+      "text": "Trace the story of how this project came to be from my session history. Highlight the key decisions and turning points."
+    },
+    {
+      "id": "03.2",
+      "section": "Narrate the story",
+      "skill": "arc",
+      "evidence": "live",
+      "tools": [
+        "search",
+        "session_synopsis"
+      ],
+      "text": "Compile every session related to <topic> and narrate the arc, start to finish."
+    },
+    {
+      "id": "03.3",
+      "section": "Narrate the story",
+      "skill": "standup",
+      "evidence": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis"
+      ],
+      "text": "Write me a standup update from today's sessions: what I did, what's blocked, and what's next."
+    },
+    {
+      "id": "04.1",
+      "section": "Coach yourself",
+      "skill": "coach",
+      "evidence": "heuristic",
+      "tools": [
+        "session_patterns",
+        "list_sessions"
+      ],
+      "text": "Analyze my sessions from the last month and give me honest feedback on my prompt engineering."
+    },
+    {
+      "id": "04.2",
+      "section": "Coach yourself",
+      "skill": "coach",
+      "evidence": "heuristic",
+      "tools": [
+        "session_patterns",
+        "session_errors"
+      ],
+      "text": "Find where my sessions tend to stall, loop, or repeat work. What are my recurring failure patterns?"
+    },
+    {
+      "id": "04.3",
+      "section": "Coach yourself",
+      "skill": "coach",
+      "evidence": "heuristic",
+      "tools": [
+        "search",
+        "list_sessions"
+      ],
+      "text": "What direction has my work been pointing lately? Cluster my recent sessions by theme."
+    },
+    {
+      "id": "05.1",
+      "section": "Recall anything",
+      "skill": "recall",
+      "evidence": "live",
+      "tools": [
+        "search",
+        "session_synopsis",
+        "tool_journey"
+      ],
+      "text": "Find the last time I solved <problem>, and show me exactly how I did it."
+    },
+    {
+      "id": "05.2",
+      "section": "Recall anything",
+      "skill": "recall",
+      "evidence": "live",
+      "tools": [
+        "search",
+        "tool_journey"
+      ],
+      "text": "Did I ever set up <X>? Locate the session and pull out the precise commands."
+    },
+    {
+      "id": "05.3",
+      "section": "Recall anything",
+      "skill": "recall",
+      "evidence": "live",
+      "tools": [
+        "search"
+      ],
+      "text": "Search my sessions for <topic> and list every session that touched it, newest first."
+    },
+    {
+      "id": "06.1",
+      "section": "Ground your agent",
+      "skill": "prime",
+      "evidence": "live",
+      "tools": [
+        "list_sessions",
+        "session_synopsis",
+        "session_transcript"
+      ],
+      "text": "Before you start, query OpenStory for prior context on this project and pick up where the last session left off."
+    },
+    {
+      "id": "06.2",
+      "section": "Ground your agent",
+      "skill": "recall",
+      "evidence": "live",
+      "tools": [
+        "search",
+        "session_errors"
+      ],
+      "text": "Use OpenStory to check whether we've hit this error before — and what fixed it — before debugging from scratch."
+    },
+    {
+      "id": "06.3",
+      "section": "Ground your agent",
+      "skill": "watch",
+      "evidence": "live",
+      "tools": [
+        "subscribe_session",
+        "list_sessions",
+        "session_activity"
+      ],
+      "text": "Watch the work happening on <branch> through OpenStory and summarize it for me as it streams."
+    },
+    {
+      "id": "07.1",
+      "section": "Tell it as a reel",
+      "skill": "reel",
+      "evidence": "illustrative",
+      "tools": [
+        "agent_search",
+        "session_story",
+        "save_reel"
+      ],
+      "text": "Turn the story of the nats leaf migration into a reel I can save and replay."
+    },
+    {
+      "id": "07.2",
+      "section": "Tell it as a reel",
+      "skill": "reel",
+      "evidence": "illustrative",
+      "tools": [
+        "search",
+        "session_synopsis",
+        "save_reel"
+      ],
+      "text": "Save this session as a reel with a closer line, then play it for me."
+    },
+    {
+      "id": "07.3",
+      "section": "Tell it as a reel",
+      "skill": "reel",
+      "evidence": "illustrative",
+      "tools": [
+        "list_reels",
+        "play_reel",
+        "where_is_user"
+      ],
+      "text": "Replay that reel we made about the mongo migration."
+    },
+    {
+      "id": "08.1",
+      "section": "Remember (memory hands)",
+      "skill": "remember",
+      "evidence": "live",
+      "tools": [
+        "story_search",
+        "story_summary",
+        "story_context"
+      ],
+      "text": "Why did we switch from <A> to <B>? Cite the arc where it was decided."
+    },
+    {
+      "id": "08.2",
+      "section": "Remember (memory hands)",
+      "skill": "remember",
+      "evidence": "live",
+      "tools": [
+        "story_list",
+        "story_summary",
+        "story_related"
+      ],
+      "text": "What did I say I'd come back to and never did?"
+    },
+    {
+      "id": "08.3",
+      "section": "Remember (memory hands)",
+      "skill": "remember",
+      "evidence": "live",
+      "tools": [
+        "story_search",
+        "story_summary",
+        "story_descend"
+      ],
+      "text": "What is my position on <topic>, in my own words, and when did it change?"
+    },
+    {
+      "id": "08.4",
+      "section": "Remember (memory hands)",
+      "skill": "narrate",
+      "evidence": "live",
+      "tools": [
+        "story_list",
+        "story_context",
+        "story_descend"
+      ],
+      "text": "Narrate the arc we just finished: title, the question that opened it, how it closed, what we decided and deferred."
+    },
+    {
+      "id": "08.5",
+      "section": "Remember (memory hands)",
+      "skill": "segment",
+      "evidence": "live",
+      "tools": [
+        "story_list",
+        "story_context"
+      ],
+      "text": "Break that arc into its threads and name the intent of each."
+    },
+    {
+      "id": "08.6",
+      "section": "Remember (memory hands)",
+      "skill": "listen",
+      "evidence": "live",
+      "tools": [
+        "story_list",
+        "subscribe_arcs"
+      ],
+      "text": "Keep a running story of this session: narrate each arc as it closes."
+    }
   ]
 }

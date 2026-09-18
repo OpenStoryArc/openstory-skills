@@ -6,7 +6,7 @@
 > grounded against OpenStory `master`: `rs/mcp/src/http_store.rs` (the MCP→REST
 > endpoint map) and live API probes.
 
-**Coverage:** 25/25 common prompts are backed by a built skill — 20 live · 5 heuristic · 0 pending.
+**Coverage:** 31/31 common prompts are backed by a built skill — 26 live · 5 heuristic · 0 pending.
 
 This is the trace an agent can follow to trust a skill: a prompt → the skill that
 serves it → the MCP tools it calls → the REST endpoint each tool wraps → the
@@ -157,6 +157,42 @@ source line that defines it.
   - `play_reel` — `mcp__openstory__play_reel` → `POST /api/control {action: navigate_to, params: {kind: reel}}` — _rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07)_
   - `where_is_user` — `mcp__openstory__where_is_user` → `GET /api/ui-state` — _rs/mcp/src/tools/control.rs_
 
+### 08 · Remember (memory hands)
+
+- **[08.1]** "Why did we switch from <A> to <B>? Cite the arc where it was decided."
+  → **`/openstory:remember`** _(live)_
+  - `story_search` — `mcp__openstory__story_search` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_summary` — `mcp__openstory__story_summary` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_context` — `mcp__openstory__story_context` → `GET /api/sessions/{id}/patterns?type=story.exchange` — _rs/mcp/src/tools/memory.rs_
+
+- **[08.2]** "What did I say I'd come back to and never did?"
+  → **`/openstory:remember`** _(live)_
+  - `story_list` — `mcp__openstory__story_list` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_summary` — `mcp__openstory__story_summary` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_related` — `mcp__openstory__story_related` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+
+- **[08.3]** "What is my position on <topic>, in my own words, and when did it change?"
+  → **`/openstory:remember`** _(live)_
+  - `story_search` — `mcp__openstory__story_search` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_summary` — `mcp__openstory__story_summary` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_descend` — `mcp__openstory__story_descend` → `GET /api/sessions/{id}/patterns?type=story.exchange` — _rs/mcp/src/tools/memory.rs_
+
+- **[08.4]** "Narrate the arc we just finished: title, the question that opened it, how it closed, what we decided and deferred."
+  → **`/openstory:narrate`** _(live)_
+  - `story_list` — `mcp__openstory__story_list` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_context` — `mcp__openstory__story_context` → `GET /api/sessions/{id}/patterns?type=story.exchange` — _rs/mcp/src/tools/memory.rs_
+  - `story_descend` — `mcp__openstory__story_descend` → `GET /api/sessions/{id}/patterns?type=story.exchange` — _rs/mcp/src/tools/memory.rs_
+
+- **[08.5]** "Break that arc into its threads and name the intent of each."
+  → **`/openstory:segment`** _(live)_
+  - `story_list` — `mcp__openstory__story_list` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `story_context` — `mcp__openstory__story_context` → `GET /api/sessions/{id}/patterns?type=story.exchange` — _rs/mcp/src/tools/memory.rs_
+
+- **[08.6]** "Keep a running story of this session: narrate each arc as it closes."
+  → **`/openstory:listen`** _(live)_
+  - `story_list` — `mcp__openstory__story_list` → `GET /api/sessions/{id}/patterns?type=story.arc` — _rs/mcp/src/tools/memory.rs_
+  - `subscribe_arcs` — `mcp__openstory__subscribe_arcs` → `NATS patterns.{project}.{session} (JSON array of PatternEvent)` — _rs/mcp/src/subscription.rs_
+
 ## Data sources (every tool the skills cite)
 
 | Tool | MCP | REST endpoint | Source | Status |
@@ -182,6 +218,14 @@ source line that defines it.
 | `save_reel` | `mcp__openstory__save_reel` | `POST /api/reels` | rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
 | `list_reels` | `mcp__openstory__list_reels` | `GET /api/reels` | rs/mcp/src/tools/reels.rs, rs/server/src/api.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
 | `play_reel` | `mcp__openstory__play_reel` | `POST /api/control {action: navigate_to, params: {kind: reel}}` | rs/mcp/src/tools/reels.rs (merged to master in OpenStory PR #106, 2026-08-07) | live |
+| `story_list` | `mcp__openstory__story_list` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
+| `story_summary` | `mcp__openstory__story_summary` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
+| `story_descend` | `mcp__openstory__story_descend` | `GET /api/sessions/{id}/patterns?type=story.exchange` | rs/mcp/src/tools/memory.rs | live |
+| `story_surface` | `mcp__openstory__story_surface` | `GET /api/sessions/{id}/patterns?type=story.exchange` | rs/mcp/src/tools/memory.rs | live |
+| `story_context` | `mcp__openstory__story_context` | `GET /api/sessions/{id}/patterns?type=story.exchange` | rs/mcp/src/tools/memory.rs | live |
+| `story_search` | `mcp__openstory__story_search` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
+| `story_related` | `mcp__openstory__story_related` | `GET /api/sessions/{id}/patterns?type=story.arc` | rs/mcp/src/tools/memory.rs | live |
+| `subscribe_arcs` | `mcp__openstory__subscribe_arcs` | `NATS patterns.{project}.{session} (JSON array of PatternEvent)` | rs/mcp/src/subscription.rs | live |
 
 ## Skills
 
@@ -201,6 +245,10 @@ source line that defines it.
 | `/openstory:prime` | Pick up where the last session left off. | live | `list_sessions`, `session_synopsis`, `session_transcript` |
 | `/openstory:watch` | Watch a branch's work as it streams. | live | `subscribe_session`, `list_sessions`, `session_activity`, `tool_journey` |
 | `/openstory:reel` | Turn <topic> into a saved, replayable reel. | live | `agent_search`, `search`, `session_story`, `session_synopsis`, `save_reel`, `list_reels`, `play_reel`, `where_is_user` |
+| `/openstory:remember` | What did I decide / say / defer about X, by traversal under a token budget? | live | `story_search`, `story_list`, `story_summary`, `story_descend`, `story_context`, `story_related` |
+| `/openstory:narrate` | Title, question, resolution, summary and slots for a closed arc? | live | `story_list`, `story_context`, `story_descend`, `save_reel` |
+| `/openstory:segment` | What were the intents (paragraphs) inside a closed arc? | live | `story_list`, `story_context`, `save_reel` |
+| `/openstory:listen` | Narrate arcs as they close, live or by polling? | live | `story_list`, `story_context`, `subscribe_arcs`, `save_reel` |
 
 ## Gaps
 
